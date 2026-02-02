@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "s7YxGkEgWso=",
+  "success": true,
+  "projectFilePath": "/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/ExcelDashboardMVP.csproj",
+  "expectedPackageFiles": [
+    "/home/codespace/.nuget/packages/epplus/8.4.1/epplus.8.4.1.nupkg.sha512",
+    "/home/codespace/.nuget/packages/epplus.interfaces/8.4.0/epplus.interfaces.8.4.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.aspnetcore.app.internal.assets/10.0.0/microsoft.aspnetcore.app.internal.assets.10.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.io.recyclablememorystream/3.0.1/microsoft.io.recyclablememorystream.3.0.1.nupkg.sha512",
+    "/home/codespace/.nuget/packages/mudblazor/8.15.0/mudblazor.8.15.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.componentmodel.annotations/5.0.0/system.componentmodel.annotations.5.0.0.nupkg.sha512",
+    "/home/codespace/.nuget/packages/system.security.cryptography.pkcs/10.0.0/system.security.cryptography.pkcs.10.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
