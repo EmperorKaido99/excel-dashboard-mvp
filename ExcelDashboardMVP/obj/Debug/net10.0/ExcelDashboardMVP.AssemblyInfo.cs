@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExcelDashboardMVP")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ec6976f08ef9cc58913b8b068f540b0f239e3d7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+934bc2708b134ee33161d1d6fe2f0f1f06d31e14")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExcelDashboardMVP")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExcelDashboardMVP")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

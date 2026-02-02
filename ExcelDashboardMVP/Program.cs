@@ -1,10 +1,14 @@
 using ExcelDashboardMVP.Components;
+using ExcelDashboardMVP.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register Excel Import Service
+builder.Services.AddScoped<ExcelImportService>();
 
 var app = builder.Build();
 

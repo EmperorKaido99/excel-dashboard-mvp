@@ -1,0 +1,152 @@
+@page "/import"
+@using ExcelDashboardMVP.Models
+@using ExcelDashboardMVP.Services
+@inject ExcelImportService ExcelImportService
+@inject ILogger<Import> Logger
+
+<PageTitle>Import Data</PageTitle>
+
+<h1>Import Person Records</h1>
+
+<div class="mb-3">
+    <label for="fileUpload" class="form-label">Select Excel File</label>
+    <InputFile OnChange="HandleFileSelected" class="form-control" id="fileUpload" accept=".xlsx,.xls" />
+</div>
+
+@if (isLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Importing data...</p>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success" role="alert">
+        @successMessage
+    </div>
+}
+
+@if (personRecords != null && personRecords.Any())
+{
+    <h3>Imported Records (@personRecords.Count)</h3>
+    
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Identifier</th>
+                    <th>Age</th>
+                    <th>Sex</th>
+                    <th>Contact</th>
+                    <th>Email</th>
+                    <th>Municipality</th>
+                    <th>Company</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var record in personRecords)
+                {
+                    <tr>
+                        <td>@record.Number</td>
+                        <td>@record.Name</td>
+                        <td>@record.Surname</td>
+                        <td>@record.Identifier</td>
+                        <td>@record.Age</td>
+                        <td>@record.Sex</td>
+                        <td>@record.ContactDetails</td>
+                        <td>@record.EmailAddress</td>
+                        <td>@record.LocalMunicipality</td>
+                        <td>@record.HostCompany</td>
+                        <td>@(record.StartDate?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                        <td>@(record.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                        <td>
+                            @if (record.IsActivePlacement)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<PersonRecord>? personRecords;
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        isLoading = true;
+
+        try
+        {
+            var file = e.File;
+
+            if (file == null)
+            {
+                errorMessage = "No file selected";
+                return;
+            }
+
+            // Validate file extension
+            var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+            if (extension != ".xlsx" && extension != ".xls")
+            {
+                errorMessage = "Please select a valid Excel file (.xlsx or .xls)";
+                return;
+            }
+
+            // Read file into stream
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            // Import data
+            personRecords = await ExcelImportService.ImportFromExcelAsync(memoryStream);
+
+            if (personRecords.Any())
+            {
+                successMessage = $"Successfully imported {personRecords.Count} records from {file.Name}";
+            }
+            else
+            {
+                errorMessage = "No records found in the Excel file";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error importing Excel file");
+            errorMessage = $"Error importing file: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
