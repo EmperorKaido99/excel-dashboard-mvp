@@ -5,7 +5,7 @@ using OfficeOpenXml;
 var builder = WebApplication.CreateBuilder(args);
 
 // EPPlus 8.x license
-ExcelPackage.License = new LicenseInfo { LicenseType = LicenseType.NonCommercial };
+ExcelPackage.License.SetNonCommercialPersonal("ExcelDashboardMVP");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
