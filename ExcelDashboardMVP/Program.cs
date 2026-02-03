@@ -11,8 +11,12 @@ ExcelPackage.License.SetNonCommercialPersonal("ExcelDashboardMVP");
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register Excel Import Service
+// Scoped — created fresh per request (original import service)
 builder.Services.AddScoped<ExcelImportService>();
+
+// Singleton — one instance for the whole app lifetime so imported
+// data stays in memory and is reachable from any page.
+builder.Services.AddSingleton<ExcelDataService>();
 
 var app = builder.Build();
 
