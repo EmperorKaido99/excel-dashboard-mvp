@@ -1,0 +1,150 @@
+@page "/upload"
+@using ExcelDashboardMVP.Services
+@using MudBlazor
+
+@inject ExcelDataService ExcelDataService
+@inject ISnackbar Snackbar
+@inject ILogger<UploadExcel> Logger
+
+<PageTitle>Upload Excel</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+
+    <!-- Page heading -->
+    <MudText Typo="Typo.h4" Color="Color.Primary" Class="mb-4">
+        Upload Excel File
+    </MudText>
+
+    <!-- File upload card -->
+    <MudCard Elevation="2">
+        <MudCardContent>
+            <MudText Typo="Typo.body1" Class="mb-4">
+                Select an <strong>.xlsx</strong> or <strong>.xls</strong> file to import person records.
+            </MudText>
+
+            <!-- MudFileUpload — T=IBrowserFile means single-file mode.
+                 Context="fileInput" exposes the hidden <input> id so the
+                 label's "for" attribute can wire up the click. -->
+            <MudFileUpload T="IBrowserFile"
+                           Context="fileInput"
+                           FilesChanged="HandleFileChanged"
+                           Accept=".xlsx,.xls"
+                           Disabled="isLoading">
+                <ButtonTemplate>
+                    <MudButton HtmlTag="label"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.UploadFile"
+                               for="@fileInput.Id">
+                        Choose File
+                    </MudButton>
+                </ButtonTemplate>
+                <!-- Shows the selected file name + size once a file is picked -->
+                <SelectedTemplate>
+                    @if (fileInput != null)
+                    {
+                        <MudChip Color="Color.Default"
+                                 Icon="@Icons.Material.Filled.AttachFile"
+                                 Size="Size.Medium">
+                            @fileInput.Name &nbsp;
+                            <MudText Typo="Typo.caption" Style="color: inherit;">
+                                (@((fileInput.Size / 1024.0).ToString("F1")) KB)
+                            </MudText>
+                        </MudChip>
+                    }
+                </SelectedTemplate>
+            </MudFileUpload>
+        </MudCardContent>
+
+        <!-- Action row: Import button + record count badge -->
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.FileDownloadDone"
+                       Disabled="isLoading || selectedFile == null"
+                       OnClick="ImportFile">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Importing…</span>
+                }
+                else
+                {
+                    <span>Import</span>
+                }
+            </MudButton>
+
+            @if (ExcelDataService.GetRecordCount() > 0)
+            {
+                <MudChip Color="Color.Info" Icon="@Icons.Material.Filled.People" Class="ml-auto">
+                    @ExcelDataService.GetRecordCount() record(s) loaded
+                </MudChip>
+            }
+        </MudCardActions>
+    </MudCard>
+
+</MudContainer>
+
+@code {
+    // The file the user picked (kept so the Import button can act on it)
+    private IBrowserFile? selectedFile;
+
+    // Flipped while the stream is being read & parsed
+    private bool isLoading;
+
+    /// <summary>
+    /// MudFileUpload fires this every time the user picks a file.
+    /// We just store the reference here; actual parsing happens when
+    /// the user clicks the Import button.
+    /// </summary>
+    private void HandleFileChanged(IBrowserFile? file)
+    {
+        selectedFile = file;
+    }
+
+    /// <summary>
+    /// Reads the selected file into a MemoryStream and hands it off
+    /// to ExcelDataService.  Success or failure is reported via ISnackbar.
+    /// </summary>
+    private async Task ImportFile()
+    {
+        if (selectedFile == null) return;
+
+        isLoading = true;
+
+        try
+        {
+            // Stream the uploaded file into memory (10 MB cap)
+            using var browserStream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var memoryStream  = new MemoryStream();
+            await browserStream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            // Hand off to the singleton service — it parses & stores
+            int count = await ExcelDataService.ImportFromExcelAsync(memoryStream);
+
+            if (count > 0)
+            {
+                Snackbar.Add(
+                    $"Successfully imported {count} record(s) from \"{selectedFile.Name}\".",
+                    Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(
+                    "The file was read but no data rows were found. " +
+                    "Make sure row 1 is a header and data starts on row 2.",
+                    Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error importing Excel file.");
+            Snackbar.Add($"Import failed: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
