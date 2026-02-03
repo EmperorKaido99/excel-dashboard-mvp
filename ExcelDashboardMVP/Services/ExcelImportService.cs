@@ -11,13 +11,19 @@ namespace ExcelDashboardMVP.Services
     {
         private readonly ILogger<ExcelImportService> _logger;
 
-        public ExcelImportService(ILogger<ExcelImportService> logger)
-        {
-            _logger = logger;
-            // Set EPPlus license context (required for EPPlus 5.0+)
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        }
-
+      public ExcelImportService(ILogger<ExcelImportService> logger)
+{
+    _logger = logger;
+    // For EPPlus 8.x, set license this way
+    if (ExcelPackage.LicenseContext == LicenseContext.NonCommercial)
+    {
+        // Already set, do nothing
+    }
+    else
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+    }
+}
         /// <summary>
         /// Imports person records from an Excel file
         /// </summary>

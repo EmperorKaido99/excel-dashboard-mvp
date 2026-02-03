@@ -1,7 +1,11 @@
 using ExcelDashboardMVP.Components;
 using ExcelDashboardMVP.Services;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// EPPlus 8.x license
+ExcelPackage.License = new LicenseInfo { LicenseType = LicenseType.NonCommercial };
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -16,7 +20,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
