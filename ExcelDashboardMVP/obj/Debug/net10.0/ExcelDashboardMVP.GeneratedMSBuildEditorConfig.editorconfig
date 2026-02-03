@@ -45,6 +45,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ob3RGb3VuZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/UploadExcel.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9VcGxvYWRFeGNlbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9Sb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

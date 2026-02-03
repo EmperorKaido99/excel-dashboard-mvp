@@ -1,6 +1,7 @@
 using ExcelDashboardMVP.Components;
 using ExcelDashboardMVP.Services;
 using OfficeOpenXml;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,9 @@ ExcelPackage.License.SetNonCommercialPersonal("ExcelDashboardMVP");
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// MudBlazor — registers theme, dialog, snackbar, resize-listener, etc.
+builder.Services.AddMudServices();
 
 // Scoped — created fresh per request (original import service)
 builder.Services.AddScoped<ExcelImportService>();
