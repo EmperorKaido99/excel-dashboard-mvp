@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@* Updated NavMenu.razor - Copy this content to: ExcelDashboardMVP/Components/Layout/NavMenu.razor *@
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">ExcelDashboardMVP</a>
     </div>
@@ -35,6 +37,34 @@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="upload">
                 <span class="bi bi-cloud-upload-nav-menu" aria-hidden="true"></span> Upload
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3" style="margin-top: 1rem;">
+            <MudText Typo="Typo.caption" Class="px-3" Style="color: rgba(255,255,255,0.5);">DASHBOARDS</MudText>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dashboard/projects">
+                <span class="bi bi-folder-nav-menu" aria-hidden="true"></span> Projects
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dashboard/jobs">
+                <span class="bi bi-briefcase-nav-menu" aria-hidden="true"></span> Jobs
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dashboard/courses">
+                <span class="bi bi-book-nav-menu" aria-hidden="true"></span> Courses
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dashboard/projects-dark">
+                <span class="bi bi-moon-nav-menu" aria-hidden="true"></span> Projects Dark
             </NavLink>
         </div>
     </nav>
