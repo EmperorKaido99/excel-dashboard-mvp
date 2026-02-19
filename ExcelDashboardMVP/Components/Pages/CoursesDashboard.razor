@@ -227,7 +227,8 @@
                                             <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">Progress</MudText>
                                             <MudText Typo="Typo.body1" Style="color: white;">@course.Progress%</MudText>
                                         </MudStack>
-                                        <MudChip Size="Size.Small" Color="@course.StatusColor">@course.Instructor</MudChip>
+                                        @* FIX: Added T="string" to MudChip *@
+                                        <MudChip T="string" Size="Size.Small" Color="@course.StatusColor">@course.Instructor</MudChip>
                                     </MudStack>
                                 </MudStack>
                             </MudCardContent>
@@ -391,13 +392,14 @@
 
     private List<CourseListItem> GetCourseList()
     {
+        // FIX CS0747: Removed erroneous commas inside numeric literals (1,103 → 1103 and 3,193 → 3193)
         var courses = new List<CourseListItem>
         {
             new CourseListItem { SNo = 1, CourseName = "Big Signs in Optical Films Maker Class", Category = "Science", Classes = 23, LastUpdated = "28-09-2023", Instructor = "Cher Opson", Students = 27 },
             new CourseListItem { SNo = 2, CourseName = "Python Lower To Twist And Linear For Beginner", Category = "Mathematics", Classes = 21, LastUpdated = "31-03-2023", Instructor = "Aran Keo", Students = 212 },
             new CourseListItem { SNo = 3, CourseName = "Learn Like To Twist And Linear For Beginner", Category = "Stocks & Trading", Classes = 812, LastUpdated = "10-05-2023", Instructor = "Zee Keo", Students = 91 },
-            new CourseListItem { SNo = 4, CourseName = "Digital Marketing Course from Scratch", Category = "Marketing", Classes = 912, LastUpdated = "24-09-2023", Instructor = "Sacrah Cambar", Students = 1,103 },
-            new CourseListItem { SNo = 5, CourseName = "Java Electrics & Beginnings For Beginner", Category = "Programming", Classes = 912, LastUpdated = "30-09-2023", Instructor = "Brown Ken", Students = 3,193 },
+            new CourseListItem { SNo = 4, CourseName = "Digital Marketing Course from Scratch", Category = "Marketing", Classes = 912, LastUpdated = "24-09-2023", Instructor = "Sacrah Cambar", Students = 1103 },
+            new CourseListItem { SNo = 5, CourseName = "Java Electrics & Beginnings For Beginner", Category = "Programming", Classes = 912, LastUpdated = "30-09-2023", Instructor = "Brown Ken", Students = 3193 },
             new CourseListItem { SNo = 6, CourseName = "C++ Zero To Twist And Linear For Beginner", Category = "HTML", Classes = 97, LastUpdated = "23-08-2023", Instructor = "Bruni Shin", Students = 251 }
         };
 

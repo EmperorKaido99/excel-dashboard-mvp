@@ -151,7 +151,8 @@
                                 </MudStack>
                             </MudTd>
                             <MudTd DataLabel="Subscription">
-                                <MudChip Size="Size.Small" Color="@context.SubColor">@context.Subscription</MudChip>
+                                @* FIX: Added T="string" to MudChip *@
+                                <MudChip T="string" Size="Size.Small" Color="@context.SubColor">@context.Subscription</MudChip>
                             </MudTd>
                             <MudTd DataLabel="Total Employees" Style="color: white;">@context.TotalEmployees</MudTd>
                             <MudTd DataLabel="Recruiter Since" Style="color: white;">@context.RecruiterSince</MudTd>
@@ -192,10 +193,11 @@
                                         </MudStack>
                                         <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.7);">@job.Company</MudText>
                                         <MudStack Row Spacing="1">
-                                            <MudChip Size="Size.Small" Icon="@Icons.Material.Filled.LocationOn" Style="background-color: rgba(255,255,255,0.1); color: white;">
+                                            @* FIX: Added T="string" to MudChip *@
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.LocationOn" Style="background-color: rgba(255,255,255,0.1); color: white;">
                                                 @job.Location
                                             </MudChip>
-                                            <MudChip Size="Size.Small" Icon="@Icons.Material.Filled.Schedule" Style="background-color: rgba(255,255,255,0.1); color: white;">
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Schedule" Style="background-color: rgba(255,255,255,0.1); color: white;">
                                                 @job.Type
                                             </MudChip>
                                         </MudStack>
@@ -335,7 +337,8 @@
                         </MudStack>
                     </MudTd>
                     <MudTd DataLabel="Category">
-                        <MudChip Size="Size.Small" Color="Color.Info">@context.DemographicGroup</MudChip>
+                        @* FIX: Added T="string" to MudChip *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.DemographicGroup</MudChip>
                     </MudTd>
                     <MudTd DataLabel="Role" Style="color: white;">@context.JobType</MudTd>
                     <MudTd DataLabel="Email" Style="color: rgba(255,255,255,0.7);">@context.EmailAddress</MudTd>
@@ -378,7 +381,8 @@
 
         lineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
         smallLineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
-        smallLineChartOptions.DisableLegend = true;
+        // FIX CS1061: DisableLegend was removed in MudBlazor v7+; use ShowLegend = false instead
+        smallLineChartOptions.ShowLegend = false;
     }
 
     private class CompanyInfo

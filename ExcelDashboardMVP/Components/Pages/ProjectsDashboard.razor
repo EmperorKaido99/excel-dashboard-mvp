@@ -27,7 +27,8 @@
                         <MudStack Spacing="1">
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Completed Projects</MudText>
                             <MudText Typo="Typo.h4">@completedCount</MudText>
-                            <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                            @* FIX: Added T="string" to MudChip *@
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                                 +8% this month
                             </MudChip>
                         </MudStack>
@@ -45,7 +46,8 @@
                         <MudStack Spacing="1">
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue Projects</MudText>
                             <MudText Typo="Typo.h4">@overdueCount</MudText>
-                            <MudChip Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
+                            @* FIX: Added T="string" to MudChip *@
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
                                 +3.25% this month
                             </MudChip>
                         </MudStack>
@@ -63,7 +65,8 @@
                         <MudStack Spacing="1">
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Total Projects</MudText>
                             <MudText Typo="Typo.h4">@totalProjects</MudText>
-                            <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                            @* FIX: Added T="string" to MudChip *@
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                                 +0.81% this month
                             </MudChip>
                         </MudStack>
@@ -81,7 +84,8 @@
                         <MudStack Spacing="1">
                             <MudText Typo="Typo.body2" Color="Color.Secondary">Pending Projects</MudText>
                             <MudText Typo="Typo.h4">@pendingCount</MudText>
-                            <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                            @* FIX: Added T="string" to MudChip *@
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                                 +4.66% this month
                             </MudChip>
                         </MudStack>
@@ -174,7 +178,8 @@
                                 </MudStack>
                             </MudTd>
                             <MudTd DataLabel="Status">
-                                <MudChip Size="Size.Small" Color="@GetStatusColor(context)">
+                                @* FIX: Added T="string" to MudChip *@
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context)">
                                     @GetStatusText(context)
                                 </MudChip>
                             </MudTd>
@@ -234,8 +239,9 @@
                                     <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
                                 </MudStack>
                                 <MudStack Row Spacing="1">
-                                    <MudChip Size="Size.Small" Variant="Variant.Text">@task.Category</MudChip>
-                                    <MudChip Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
+                                    @* FIX: Added T="string" to MudChip *@
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@task.Category</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
                                 </MudStack>
                                 <MudAvatarGroup Max="3" Spacing="1">
                                     @foreach (var avatar in task.Avatars)
@@ -311,7 +317,6 @@
     {
         records = ExcelDataService.GetRecords();
         
-        // Initialize chart data
         projectAnalysisData = new List<ChartSeries>
         {
             new ChartSeries { Name = "Projects", Data = new double[] { 30, 50, 40, 35, 55, 60, 75 } },

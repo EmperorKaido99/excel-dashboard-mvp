@@ -29,6 +29,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/CoursesDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Db3Vyc2VzRGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9FcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -41,8 +45,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9JbXBvcnQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/JobsDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Kb2JzRGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ob3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/ProjectsDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Qcm9qZWN0c0Rhc2hib2FyZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/ProjectsDashboardDark.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Qcm9qZWN0c0Rhc2hib2FyZERhcmsucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/Components/Pages/UploadExcel.razor]

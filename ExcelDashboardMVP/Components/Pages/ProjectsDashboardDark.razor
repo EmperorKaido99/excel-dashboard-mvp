@@ -36,7 +36,8 @@
                             <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Large" />
                         </MudStack>
                         <MudText Typo="Typo.h4">109</MudText>
-                        <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                        @* FIX: Added T="string" to MudChip *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                             +8% this month
                         </MudChip>
                     </MudStack>
@@ -53,7 +54,8 @@
                             <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Info" Size="Size.Large" />
                         </MudStack>
                         <MudText Typo="Typo.h4">18</MudText>
-                        <MudChip Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
+                        @* FIX: Added T="string" to MudChip *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
                             +3.25% this month
                         </MudChip>
                     </MudStack>
@@ -70,7 +72,8 @@
                             <MudIcon Icon="@Icons.Material.Filled.Folder" Color="Color.Success" Size="Size.Large" />
                         </MudStack>
                         <MudText Typo="Typo.h4">389</MudText>
-                        <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                        @* FIX: Added T="string" to MudChip *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                             +0.81% this month
                         </MudChip>
                     </MudStack>
@@ -87,7 +90,8 @@
                             <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Color="Color.Warning" Size="Size.Large" />
                         </MudStack>
                         <MudText Typo="Typo.h4">227</MudText>
-                        <MudChip Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
+                        @* FIX: Added T="string" to MudChip *@
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
                             +4.66% this month
                         </MudChip>
                     </MudStack>
@@ -180,7 +184,8 @@
                                 </MudStack>
                             </MudTd>
                             <MudTd DataLabel="Status">
-                                <MudChip Size="Size.Small" Color="@GetStatusColor(context)">
+                                @* FIX: Added T="string" to MudChip *@
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context)">
                                     @GetStatusText(context)
                                 </MudChip>
                             </MudTd>
@@ -240,7 +245,8 @@
                                     <MudStack Spacing="0" Style="flex: 1;">
                                         <MudText Typo="Typo.body2" Style="color: white;">@task.Title</MudText>
                                     </MudStack>
-                                    <MudChip Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
+                                    @* FIX: Added T="string" to MudChip *@
+                                    <MudChip T="string" Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
                                 </MudStack>
                                 <MudAvatarGroup Max="3" Spacing="1">
                                     @foreach (var avatar in task.Avatars)
@@ -274,8 +280,9 @@
                                     <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Style="color: white;" />
                                 </MudStack>
                                 <MudStack Row Spacing="1">
-                                    <MudChip Size="Size.Small" Variant="Variant.Text" Style="background-color: rgba(255,255,255,0.1); color: white;">@task.Category</MudChip>
-                                    <MudChip Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
+                                    @* FIX: Added T="string" to MudChip *@
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Style="background-color: rgba(255,255,255,0.1); color: white;">@task.Category</MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
                                 </MudStack>
                                 <MudAvatarGroup Max="3" Spacing="1">
                                     @foreach (var avatar in task.Avatars)
@@ -444,3 +451,4 @@
         };
     }
 }
+
