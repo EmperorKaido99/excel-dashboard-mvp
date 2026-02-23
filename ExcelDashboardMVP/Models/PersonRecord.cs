@@ -3,101 +3,39 @@ using System.ComponentModel.DataAnnotations;
 namespace ExcelDashboardMVP.Models
 {
     /// <summary>
-    /// Represents a person record with employment and demographic information
+    /// Represents a person record with employment and demographic information.
+    /// Columns match the uploaded Excel structure exactly.
     /// </summary>
     public class PersonRecord
     {
         [Key]
-        public int Number { get; set; }
+        public int RowNumber { get; set; }
 
-        [Required]
-        [StringLength(100)]
-        public string Surname { get; set; } = string.Empty;
-
-        [Required]
-        [StringLength(100)]
         public string Name { get; set; } = string.Empty;
-
-        [StringLength(50)]
+        public string Surname { get; set; } = string.Empty;
         public string Identifier { get; set; } = string.Empty;
-
-        public int Age { get; set; }
-
-        [StringLength(10)]
-        public string Sex { get; set; } = string.Empty;
-
-        public bool PersonWithDisability { get; set; }
-
-        [StringLength(100)]
-        public string DemographicGroup { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string ContactDetails { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string AlternativeContactDetails { get; set; } = string.Empty;
-
-        [EmailAddress]
-        [StringLength(200)]
         public string EmailAddress { get; set; } = string.Empty;
-
-        [StringLength(300)]
-        public string Address { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string Suburb { get; set; } = string.Empty;
-
-        [StringLength(100)]
         public string LocalMunicipality { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string DistrictMunicipality { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string EmploymentStatus { get; set; } = string.Empty;
-
-        [StringLength(100)]
-        public string StatusAtStartOfProgramme { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string LeadCompany { get; set; } = string.Empty;
-
-        [StringLength(300)]
-        public string LeadCompanyAddress { get; set; } = string.Empty;
-
-        [StringLength(200)]
         public string HostCompany { get; set; } = string.Empty;
-
-        [StringLength(100)]
+        public string LeadCompany { get; set; } = string.Empty;
         public string JobType { get; set; } = string.Empty;
+        public string DemographicGroup { get; set; } = string.Empty;
+        public string Sex { get; set; } = string.Empty;
+        public string ContactDetails { get; set; } = string.Empty;
+        public string EmploymentStatus { get; set; } = string.Empty;
+        public string PersonDisability { get; set; } = string.Empty;
 
-        public DateTime? StartDate { get; set; }
-
-        public DateTime? EndDate { get; set; }
-
-        public int PeriodOfPlacement { get; set; }
-
-        [StringLength(500)]
-        public string DocumentPath { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Calculated property for full name
-        /// </summary>
-        public string FullName => $"{Name} {Surname}";
+        /// <summary>Full name computed from Name + Surname.</summary>
+        public string FullName => $"{Name} {Surname}".Trim();
 
         /// <summary>
-        /// Calculated property to check if placement is currently active
+        /// Returns true when PersonDisability column indicates a disability.
+        /// Accepts: Y, Yes, 1, True (case-insensitive).
         /// </summary>
-        public bool IsActivePlacement
-        {
-            get
-            {
-                if (!StartDate.HasValue || !EndDate.HasValue)
-                    return false;
-
-                var today = DateTime.Today;
-                return today >= StartDate.Value && today <= EndDate.Value;
-            }
-        }
+        public bool HasDisability =>
+            PersonDisability.Equals("Y",    StringComparison.OrdinalIgnoreCase) ||
+            PersonDisability.Equals("Yes",  StringComparison.OrdinalIgnoreCase) ||
+            PersonDisability.Equals("1",    StringComparison.OrdinalIgnoreCase) ||
+            PersonDisability.Equals("True", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -8,122 +8,118 @@
 
 <PageTitle>Upload Excel</PageTitle>
 
-<!-- ── Upload card ──────────────────────────────────────────── -->
-<MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width: 680px;">
-    <MudText Typo="Typo.h5" Color="Color.Primary" GutterBottom>Upload Excel File</MudText>
+@* ── Upload card ─────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width:680px;">
+    <MudText Typo="Typo.h5" Color="Color.Primary">Upload Excel File</MudText>
     <MudText Color="Color.Secondary" Class="mb-4">
-        Select a <strong>.xlsx</strong> file to import person records into the system.
-        The data will be available across all dashboard pages immediately after upload.
+        Select a <strong>.xlsx</strong> or <strong>.xls</strong> file to import participant records.
+        The data will be instantly available across all dashboard pages after upload.
     </MudText>
 
-    <MudFileUpload T="IBrowserFile"
-                   FilesChanged="HandleFileChanged"
-                   Accept=".xlsx"
-                   Disabled="isLoading">
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+        Expected columns (any order): Name, Surname, Identifier, EmailAddress,
+        LocalMunicipality, HostCompany, LeadCompany, JobType, DemographicGroup,
+        Sex, ContactDetails, EmploymentStatus, PersonDisability
+    </MudText>
+
+    <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileChanged"
+                   Accept=".xlsx,.xls" Disabled="_isLoading">
         <ActivatorContent>
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.FileUpload">
                 Pick file
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
 
-    <!-- file-name badge shown after a file is picked -->
-    @if (selectedFileName != null)
+    @if (_selectedFileName != null)
     {
-        <MudChip T="string"
-                 Color="Color.Info"
-                 Icon="@Icons.Material.Filled.Description"
-                 Class="mt-3">
-            @selectedFileName
+        <MudChip T="string" Color="Color.Info"
+                 Icon="@Icons.Material.Filled.Description" Class="mt-3">
+            @_selectedFileName
         </MudChip>
     }
 
-    <!-- loading spinner -->
-    @if (isLoading)
+    @if (_isLoading)
     {
-        <MudProgressLinear Color="Color.Primary" Indeterminate Class="mt-4" />
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" />
         <MudText Color="Color.Secondary" Class="mt-2">Parsing file…</MudText>
     }
 </MudPaper>
 
-<!-- ── Summary card (only visible after a successful import) ── -->
-@if (importedCount > 0)
+@* ── Summary card ────────────────────────────────────────────────────────── *@
+@if (_importedCount > 0)
 {
-    <MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width: 680px;">
-        <MudText Typo="Typo.h6" Color="Color.Success" GutterBottom>
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" /> Import Summary
+    <MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width:680px;">
+        <MudText Typo="Typo.h6" Color="Color.Success">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+            Import Summary
         </MudText>
-
         <MudDivider Class="mb-3" />
-
         <MudGrid Spacing="2">
             <MudItem xs="6">
                 <MudText><strong>Records imported</strong></MudText>
-                <MudText Typo="Typo.h4" Color="Color.Primary">@importedCount</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Primary">@_importedCount</MudText>
             </MudItem>
             <MudItem xs="6">
                 <MudText><strong>Source file</strong></MudText>
-                <MudText>@selectedFileName</MudText>
+                <MudText>@_selectedFileName</MudText>
             </MudItem>
         </MudGrid>
-
-        <MudStack Row Spacing="2" Class="mt-4">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Secondary"
-                       StartIcon="@Icons.Material.Filled.TableView"
-                       Href="/data-table">
+        <MudStack Row="true" Spacing="2" Class="mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.TableView" Href="/data-table">
                 View Data Table
             </MudButton>
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Dashboard"
-                       Href="/dashboard/projects">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Dashboard" Href="/dashboard/projects">
                 View Dashboard
             </MudButton>
         </MudStack>
     </MudPaper>
 }
 
-<!-- ── Quick-preview table (first 10 rows) ─────────────────── -->
-@if (previewRecords != null && previewRecords.Any())
+@* ── Quick-preview table ─────────────────────────────────────────────────── *@
+@if (_previewRecords != null && _previewRecords.Any())
 {
     <MudPaper Elevation="2" Class="pa-4 ma-4">
-        <MudText Typo="Typo.h6" GutterBottom>Preview (first 10 rows)</MudText>
-
-        <MudSimpleTable Dense Hover Striped>
+        <MudText Typo="Typo.h6">Preview (first 10 rows)</MudText>
+        <MudSimpleTable Dense="true" Hover="true" Striped="true">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Name</th>
                     <th>Surname</th>
-                    <th>Age</th>
                     <th>Municipality</th>
                     <th>Host Company</th>
-                    <th>Start Date</th>
-                    <th>Status</th>
+                    <th>Job Type</th>
+                    <th>Sex</th>
+                    <th>Emp. Status</th>
+                    <th>Disability</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var rec in previewRecords)
+                @foreach (var rec in _previewRecords)
                 {
                     <tr>
-                        <td>@rec.Number</td>
+                        <td>@rec.RowNumber</td>
                         <td>@rec.Name</td>
                         <td>@rec.Surname</td>
-                        <td>@rec.Age</td>
                         <td>@rec.LocalMunicipality</td>
                         <td>@rec.HostCompany</td>
-                        <td>@(rec.StartDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td>@rec.JobType</td>
+                        <td>@rec.Sex</td>
+                        <td>@rec.EmploymentStatus</td>
                         <td>
-                            @if (rec.IsActivePlacement)
+                            @if (rec.HasDisability)
                             {
-                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Yes</MudChip>
                             }
                             else
                             {
-                                <MudChip T="string" Color="Color.Default" Size="Size.Small">Inactive</MudChip>
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">
+                                    @(string.IsNullOrWhiteSpace(rec.PersonDisability) ? "—" : rec.PersonDisability)
+                                </MudChip>
                             }
                         </td>
                     </tr>
@@ -134,17 +130,17 @@
 }
 
 @code {
-    private bool isLoading;
-    private string? selectedFileName;
-    private int importedCount;
-    private List<PersonRecord>? previewRecords;
+    private bool _isLoading;
+    private string? _selectedFileName;
+    private int _importedCount;
+    private List<PersonRecord>? _previewRecords;
 
     private async Task HandleFileChanged(IBrowserFile? file)
     {
-        selectedFileName = null;
-        importedCount    = 0;
-        previewRecords   = null;
-        isLoading        = true;
+        _selectedFileName = null;
+        _importedCount    = 0;
+        _previewRecords   = null;
+        _isLoading        = true;
 
         try
         {
@@ -155,33 +151,34 @@
             }
 
             var ext = Path.GetExtension(file.Name).ToLowerInvariant();
-            if (ext != ".xlsx")
+            if (ext != ".xlsx" && ext != ".xls")
             {
-                Snackbar.Add("Only .xlsx files are supported.", Severity.Error);
+                Snackbar.Add("Only .xlsx and .xls files are supported.", Severity.Error);
                 return;
             }
 
-            selectedFileName = file.Name;
+            _selectedFileName = file.Name;
 
             using var browserStream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
-            using var memoryStream  = new MemoryStream();
-            await browserStream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+            using var ms = new MemoryStream();
+            await browserStream.CopyToAsync(ms);
+            ms.Position = 0;
 
-            importedCount = await ExcelDataService.ImportFromExcelAsync(memoryStream);
+            _importedCount = await ExcelDataService.ImportFromExcelAsync(ms);
 
-            if (importedCount == 0)
+            if (_importedCount == 0)
             {
                 Snackbar.Add("The file contained no data rows.", Severity.Warning);
                 return;
             }
 
-            previewRecords = ExcelDataService.GetRecords().Take(10).ToList();
+            _previewRecords = ExcelDataService.GetRecords().Take(10).ToList();
 
             Snackbar.Add(
-                $"Successfully imported {importedCount} record{(importedCount == 1 ? "" : "s")} from {file.Name}. Navigate to Data Table to view all records.",
+                $"Imported {_importedCount} record{(_importedCount == 1 ? "" : "s")} from {file.Name}. " +
+                "Navigate to Data Table to view all records.",
                 Severity.Success,
-                configure => { configure.ShowCloseIcon = true; configure.VisibleStateDuration = 6000; });
+                cfg => { cfg.ShowCloseIcon = true; cfg.VisibleStateDuration = 6000; });
         }
         catch (Exception ex)
         {
@@ -190,7 +187,7 @@
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
         }
     }
 }
