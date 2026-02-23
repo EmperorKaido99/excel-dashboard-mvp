@@ -2,34 +2,32 @@
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @inject ExcelDataService ExcelDataService
+@implements IDisposable
 
 <PageTitle>Projects Dashboard</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <!-- Page Header -->
+    <!-- Page Header — NO BUTTONS -->
     <MudGrid Class="mb-4">
-        <MudItem xs="12" Class="d-flex justify-space-between align-center">
+        <MudItem xs="12">
             <MudText Typo="Typo.h4" Color="Color.Primary">Projects</MudText>
-            <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-                <MudButton StartIcon="@Icons.Material.Filled.Dashboard">Dashboards</MudButton>
-                <MudButton StartIcon="@Icons.Material.Filled.Folder" Variant="Variant.Filled">Projects</MudButton>
-            </MudButtonGroup>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                @_records.Count participants loaded
+            </MudText>
         </MudItem>
     </MudGrid>
 
     <!-- Top Metrics Cards -->
     <MudGrid Spacing="3" Class="mb-4">
-        <!-- Completed Projects -->
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Completed Projects</MudText>
-                            <MudText Typo="Typo.h4">@completedCount</MudText>
-                            @* FIX: Added T="string" to MudChip *@
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Completed Placements</MudText>
+                            <MudText Typo="Typo.h4">@_completedCount</MudText>
                             <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
-                                +8% this month
+                                Active in system
                             </MudChip>
                         </MudStack>
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Large" />
@@ -38,36 +36,32 @@
             </MudCard>
         </MudItem>
 
-        <!-- Overdue Projects -->
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Overdue Projects</MudText>
-                            <MudText Typo="Typo.h4">@overdueCount</MudText>
-                            @* FIX: Added T="string" to MudChip *@
-                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.TrendingDown">
-                                +3.25% this month
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Active Placements</MudText>
+                            <MudText Typo="Typo.h4">@_activeCount</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Circle">
+                                Currently placed
                             </MudChip>
                         </MudStack>
-                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Info" Size="Size.Large" />
+                        <MudIcon Icon="@Icons.Material.Filled.Work" Color="Color.Info" Size="Size.Large" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
 
-        <!-- Total Projects -->
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total Projects</MudText>
-                            <MudText Typo="Typo.h4">@totalProjects</MudText>
-                            @* FIX: Added T="string" to MudChip *@
-                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
-                                +0.81% this month
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total Participants</MudText>
+                            <MudText Typo="Typo.h4">@_records.Count</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.People">
+                                In database
                             </MudChip>
                         </MudStack>
                         <MudIcon Icon="@Icons.Material.Filled.Folder" Color="Color.Success" Size="Size.Large" />
@@ -76,17 +70,15 @@
             </MudCard>
         </MudItem>
 
-        <!-- Pending Projects -->
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
                         <MudStack Spacing="1">
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Pending Projects</MudText>
-                            <MudText Typo="Typo.h4">@pendingCount</MudText>
-                            @* FIX: Added T="string" to MudChip *@
-                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.TrendingUp">
-                                +4.66% this month
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Host Companies</MudText>
+                            <MudText Typo="Typo.h4">@_hostCompanyCount</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Business">
+                                Unique hosts
                             </MudChip>
                         </MudStack>
                         <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Color="Color.Warning" Size="Size.Large" />
@@ -98,25 +90,22 @@
 
     <!-- Main Content Grid -->
     <MudGrid Spacing="3">
-        <!-- Left Column: Team Members, Tasks, Charts -->
+        <!-- Left Column -->
         <MudItem xs="12" md="8">
             <!-- Project Analysis Chart -->
             <MudCard Elevation="2" Class="mb-3">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Project Analysis</MudText>
+                        <MudText Typo="Typo.h6">Placement Analysis</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudChart ChartType="ChartType.Bar" 
-                              ChartSeries="@projectAnalysisData" 
-                              XAxisLabels="@daysOfWeek"
-                              Width="100%" 
+                    <MudChart ChartType="ChartType.Bar"
+                              ChartSeries="@_projectAnalysisData"
+                              XAxisLabels="@_daysOfWeek"
+                              Width="100%"
                               Height="250px"
-                              ChartOptions="@chartOptions"/>
+                              ChartOptions="@_chartOptions" />
                 </MudCardContent>
             </MudCard>
 
@@ -124,73 +113,70 @@
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Projects Summary</MudText>
+                        <MudText Typo="Typo.h6">Participants Summary</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudTextField @bind-Value="searchString" 
-                                    Placeholder="Search Here" 
-                                    Adornment="Adornment.Start" 
-                                    AdornmentIcon="@Icons.Material.Filled.Search" 
-                                    IconSize="Size.Small"
-                                    Variant="Variant.Outlined"
-                                    Margin="Margin.Dense"
-                                    Class="mr-2"/>
-                        <MudButton StartIcon="@Icons.Material.Filled.Add" 
-                                   Variant="Variant.Filled" 
-                                   Color="Color.Primary"
-                                   Size="Size.Small">
-                            Sort By
-                        </MudButton>
+                        <MudTextField @bind-Value="_searchString"
+                                      Placeholder="Search…"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      IconSize="Size.Small"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Immediate="true"
+                                      DebounceInterval="200" />
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent Class="pa-0">
-                    <MudTable Items="@GetFilteredProjects()" 
-                              Hover="true" 
+                    <MudTable Items="@GetFilteredProjects()"
+                              Hover="true"
                               Dense="true"
                               FixedHeader="true"
                               Height="400px">
                         <HeaderContent>
-                            <MudTh>S.No</MudTh>
-                            <MudTh>Title</MudTh>
+                            <MudTh>No</MudTh>
+                            <MudTh>Name</MudTh>
                             <MudTh>Assigned To</MudTh>
-                            <MudTh>Tasks</MudTh>
                             <MudTh>Progress</MudTh>
                             <MudTh>Status</MudTh>
-                            <MudTh>Due Date</MudTh>
+                            <MudTh>End Date</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="S.No">@context.Number</MudTd>
-                            <MudTd DataLabel="Title">@context.HostCompany</MudTd>
+                            <MudTd DataLabel="No">@context.Number</MudTd>
+                            <MudTd DataLabel="Name">@context.HostCompany</MudTd>
                             <MudTd DataLabel="Assigned To">
-                                <MudAvatarGroup Max="3" Spacing="2">
+                                <MudAvatarGroup Max="2" Spacing="2">
                                     <MudAvatar Color="Color.Primary" Size="Size.Small">@context.Name.Substring(0, 1)</MudAvatar>
                                     <MudAvatar Color="Color.Secondary" Size="Size.Small">@context.Surname.Substring(0, 1)</MudAvatar>
                                 </MudAvatarGroup>
                             </MudTd>
-                            <MudTd DataLabel="Tasks">@($"{context.PeriodOfPlacement}/100")</MudTd>
                             <MudTd DataLabel="Progress">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudProgressLinear Color="@GetProgressColor(context.PeriodOfPlacement)" 
-                                                     Value="@context.PeriodOfPlacement" 
-                                                     Size="Size.Small" 
-                                                     Style="width: 80px;"/>
+                                    <MudProgressLinear Color="@GetProgressColor(context.PeriodOfPlacement)"
+                                                       Value="@context.PeriodOfPlacement"
+                                                       Size="Size.Small"
+                                                       Style="width: 80px;" />
                                     <MudText Typo="Typo.caption">@context.PeriodOfPlacement%</MudText>
                                 </MudStack>
                             </MudTd>
                             <MudTd DataLabel="Status">
-                                @* FIX: Added T="string" to MudChip *@
                                 <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context)">
                                     @GetStatusText(context)
                                 </MudChip>
                             </MudTd>
-                            <MudTd DataLabel="Due Date">@context.EndDate?.ToString("dd-MM-yyyy")</MudTd>
+                            <MudTd DataLabel="End Date">@context.EndDate?.ToString("dd-MM-yyyy")</MudTd>
                         </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText Align="Align.Center" Color="Color.Secondary" Class="pa-4">
+                                No data — upload an Excel file via Uploads.
+                            </MudText>
+                        </NoRecordsContent>
                     </MudTable>
                 </MudCardContent>
             </MudCard>
         </MudItem>
 
-        <!-- Right Column: Team Members, Daily Tasks, Transactions -->
+        <!-- Right Column -->
         <MudItem xs="12" md="4">
             <!-- Team Members -->
             <MudCard Elevation="2" Class="mb-3">
@@ -198,12 +184,13 @@
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">Team Members</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var member in GetTeamMembers().Take(5))
+                    @if (!_records.Any())
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No data yet.</MudText>
+                    }
+                    @foreach (var member in _records.Take(5))
                     {
                         <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                             <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
@@ -213,86 +200,64 @@
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">@member.JobType</MudText>
                                 </MudStack>
                             </MudStack>
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Small" />
+                            @if (member.IsActivePlacement)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Success" Size="Size.Small" />
+                            }
                         </MudStack>
                     }
                 </MudCardContent>
             </MudCard>
 
-            <!-- Daily Tasks -->
+            <!-- Demographics -->
             <MudCard Elevation="2" Class="mb-3">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Daily Tasks</MudText>
+                        <MudText Typo="Typo.h6">Demographics</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var task in GetDailyTasks())
+                    @foreach (var grp in _records.GroupBy(r => r.Sex).Take(5))
                     {
-                        <MudCard Outlined Class="mb-2 pa-2">
-                            <MudStack Spacing="1">
-                                <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                                    <MudText Typo="Typo.body2">@task.Title</MudText>
-                                    <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
-                                </MudStack>
-                                <MudStack Row Spacing="1">
-                                    @* FIX: Added T="string" to MudChip *@
-                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@task.Category</MudChip>
-                                    <MudChip T="string" Size="Size.Small" Color="@task.StatusColor">@task.Status</MudChip>
-                                </MudStack>
-                                <MudAvatarGroup Max="3" Spacing="1">
-                                    @foreach (var avatar in task.Avatars)
-                                    {
-                                        <MudAvatar Color="Color.Primary" Size="Size.Small">@avatar</MudAvatar>
-                                    }
-                                </MudAvatarGroup>
+                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(grp.Key) ? "Unknown" : grp.Key)</MudText>
+                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                <MudProgressLinear Value="@((_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0))"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Style="width: 80px;" />
+                                <MudText Typo="Typo.caption">@grp.Count()</MudText>
                             </MudStack>
-                        </MudCard>
+                        </MudStack>
+                    }
+                    @if (!_records.Any())
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No data yet.</MudText>
                     }
                 </MudCardContent>
             </MudCard>
 
-            <!-- Recent Transactions -->
+            <!-- Recent Transactions placeholder -->
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">Recent Transactions</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var transaction in GetRecentTransactions())
+                    @foreach (var t in _staticTransactions)
                     {
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                             <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                <MudAvatar Color="@transaction.Color">@transaction.Initial</MudAvatar>
+                                <MudAvatar Color="@t.Color">@t.Initial</MudAvatar>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body2">@transaction.Name</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@transaction.Date</MudText>
+                                    <MudText Typo="Typo.body2">@t.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@t.Date</MudText>
                                 </MudStack>
                             </MudStack>
-                            <MudText Typo="Typo.body1" Color="Color.Primary">@transaction.Amount</MudText>
+                            <MudText Typo="Typo.body1" Color="Color.Primary">@t.Amount</MudText>
                         </MudStack>
                     }
-                </MudCardContent>
-            </MudCard>
-
-            <!-- Progress Tracker Illustration -->
-            <MudCard Elevation="2" Class="mt-3" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <MudCardContent Class="text-center pa-6">
-                    <MudIcon Icon="@Icons.Material.Filled.Insights" Color="Color.Default" Size="Size.Large" Style="color: white; font-size: 4rem;" />
-                    <MudText Typo="Typo.h6" Style="color: white;" Class="mt-2">Track your work progress here</MudText>
-                    <MudButton Variant="Variant.Filled" 
-                               Color="Color.Primary" 
-                               Class="mt-3"
-                               Style="background-color: white; color: #667eea;">
-                        Track Here
-                    </MudButton>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -300,113 +265,70 @@
 </MudContainer>
 
 @code {
-    private List<PersonRecord> records = new();
-    private string searchString = "";
+    private List<PersonRecord> _records = new();
+    private string _searchString = "";
 
-    private int completedCount = 109;
-    private int overdueCount = 18;
-    private int totalProjects = 389;
-    private int pendingCount = 227;
+    private int _completedCount;
+    private int _activeCount;
+    private int _hostCompanyCount;
 
-    private string[] daysOfWeek = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    private string[] _daysOfWeek = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    private List<ChartSeries> _projectAnalysisData = new();
+    private ChartOptions _chartOptions = new ChartOptions { YAxisTicks = 20, MaxNumYAxisTicks = 5 };
 
-    private List<ChartSeries> projectAnalysisData = new();
-    private ChartOptions chartOptions = new ChartOptions();
+    private record TransactionItem(string Name, string Date, string Amount, string Initial, Color Color);
+    private List<TransactionItem> _staticTransactions = new()
+    {
+        new("Simon Cowell", "Sep 29, 2023", "$21,442", "S", Color.Primary),
+        new("Melissa Blue", "Mar 29, 2023", "$8,789", "M", Color.Info),
+        new("Gabriel Shin", "Mar 16, 2023", "$13,677", "G", Color.Success),
+    };
 
     protected override void OnInitialized()
     {
-        records = ExcelDataService.GetRecords();
-        
-        projectAnalysisData = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Projects", Data = new double[] { 30, 50, 40, 35, 55, 60, 75 } },
-            new ChartSeries { Name = "Tasks", Data = new double[] { 25, 40, 35, 30, 45, 50, 65 } },
-            new ChartSeries { Name = "Revenue", Data = new double[] { 20, 35, 30, 25, 40, 45, 60 } }
-        };
-
-        chartOptions.YAxisTicks = 20;
-        chartOptions.MaxNumYAxisTicks = 5;
+        ExcelDataService.OnDataChanged += OnDataRefresh;
+        LoadData();
     }
+
+    private void OnDataRefresh()
+    {
+        LoadData();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadData()
+    {
+        _records = ExcelDataService.GetRecords();
+        _completedCount = _records.Count(r => r.PeriodOfPlacement >= 100);
+        _activeCount = _records.Count(r => r.IsActivePlacement);
+        _hostCompanyCount = _records.Select(r => r.HostCompany).Distinct().Count(c => !string.IsNullOrWhiteSpace(c));
+
+        _projectAnalysisData = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Placements", Data = new double[] { 30, 50, 40, 35, 55, 60, 75 } },
+            new ChartSeries { Name = "Active", Data = new double[] { 25, 40, 35, 30, 45, 50, 65 } }
+        };
+    }
+
+    public void Dispose() => ExcelDataService.OnDataChanged -= OnDataRefresh;
 
     private List<PersonRecord> GetFilteredProjects()
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return records.Take(6).ToList();
-
-        return records.Where(r => 
-            r.HostCompany.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            r.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            r.Surname.Contains(searchString, StringComparison.OrdinalIgnoreCase)
-        ).Take(6).ToList();
+        var source = _records.Take(50);
+        if (string.IsNullOrWhiteSpace(_searchString)) return source.ToList();
+        return source.Where(r =>
+            r.HostCompany.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+            r.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+            r.Surname.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
     }
 
-    private List<PersonRecord> GetTeamMembers()
-    {
-        return records.Take(10).ToList();
-    }
+    private Color GetProgressColor(int progress) =>
+        progress >= 75 ? Color.Success : progress >= 50 ? Color.Primary : progress >= 25 ? Color.Warning : Color.Error;
 
-    private Color GetProgressColor(int progress)
-    {
-        if (progress >= 75) return Color.Success;
-        if (progress >= 50) return Color.Primary;
-        if (progress >= 25) return Color.Warning;
-        return Color.Error;
-    }
+    private Color GetStatusColor(PersonRecord r) =>
+        r.PeriodOfPlacement >= 100 ? Color.Success : r.IsActivePlacement ? Color.Primary : Color.Warning;
 
-    private Color GetStatusColor(PersonRecord record)
-    {
-        if (record.PeriodOfPlacement == 100) return Color.Success;
-        if (record.IsActivePlacement) return Color.Primary;
-        if (record.PeriodOfPlacement == 0) return Color.Default;
-        return Color.Warning;
-    }
-
-    private string GetStatusText(PersonRecord record)
-    {
-        if (record.PeriodOfPlacement == 100) return "Completed";
-        if (record.IsActivePlacement) return "In Progress";
-        if (record.PeriodOfPlacement > 0) return "Pending";
-        return "Pending";
-    }
-
-    private class DailyTask
-    {
-        public string Title { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Status { get; set; } = "";
-        public Color StatusColor { get; set; }
-        public List<string> Avatars { get; set; } = new();
-    }
-
-    private List<DailyTask> GetDailyTasks()
-    {
-        return new List<DailyTask>
-        {
-            new DailyTask { Title = "Home Page Design", Category = "Frontend", Status = "Dev", StatusColor = Color.Info, Avatars = new() { "M", "J", "K" } },
-            new DailyTask { Title = "About Us Page redesign", Category = "Design", Status = "Dev", StatusColor = Color.Success, Avatars = new() { "A", "B" } },
-            new DailyTask { Title = "About Us Page redesign", Category = "Design", Status = "Dev", StatusColor = Color.Success, Avatars = new() { "C", "D" } },
-            new DailyTask { Title = "New Project Discussion", Category = "Discussion", Status = "Completed", StatusColor = Color.Success, Avatars = new() { "E", "F", "G" } }
-        };
-    }
-
-    private class Transaction
-    {
-        public string Name { get; set; } = "";
-        public string Date { get; set; } = "";
-        public string Amount { get; set; } = "";
-        public string Initial { get; set; } = "";
-        public Color Color { get; set; }
-    }
-
-    private List<Transaction> GetRecentTransactions()
-    {
-        return new List<Transaction>
-        {
-            new Transaction { Name = "Simon Cowell", Date = "Sep 29, 2023 / 12:04PM", Amount = "$21,442", Initial = "S", Color = Color.Primary },
-            new Transaction { Name = "Melissa Blue", Date = "Mar 29, 2023 / 10:44AM", Amount = "$8,789", Initial = "M", Color = Color.Info },
-            new Transaction { Name = "Gabriel Shin", Date = "Mar 16, 2023 / 05:27PM", Amount = "$13,677", Initial = "G", Color = Color.Success },
-            new Transaction { Name = "Yohaansi Nakyuno", Date = "Mar 16, 2023 / 04:43PM", Amount = "$3,543", Initial = "Y", Color = Color.Warning },
-            new Transaction { Name = "Brenda Lynn", Date = "Mar 16, 2023 / 02:25PM", Amount = "$7,890", Initial = "B", Color = Color.Error }
-        };
-    }
+    private string GetStatusText(PersonRecord r) =>
+        r.PeriodOfPlacement >= 100 ? "Completed" : r.IsActivePlacement ? "In Progress" : "Pending";
 }

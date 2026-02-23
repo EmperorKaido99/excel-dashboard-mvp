@@ -1,28 +1,42 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider>
-    <MudDialogProvider />
-    <MudSnackbarProvider />
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <div class="page">
-        <div class="sidebar">
-            <NavMenu />
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <span class="app-title">ExcelDashboard MVP</span>
         </div>
 
-        <main>
-            <div class="top-row px-4">
-                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-            </div>
-
-            <article class="content px-4">
-                @Body
-            </article>
-        </main>
-    </div>
-</MudThemeProvider>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private MudTheme _theme = new MudTheme
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#1074d6",
+            Secondary = "#1e2393",
+            AppbarBackground = "#1074d6",
+            DrawerBackground = "#1e2393",
+            DrawerText = "rgba(255,255,255,0.87)",
+            DrawerIcon = "rgba(255,255,255,0.87)"
+        }
+    };
+}

@@ -14,25 +14,20 @@
         Select a <strong>.xlsx</strong> file to import person records into the system.
     </MudText>
 
-    <!-- MudBlazor 8: ActivatorContent replaces the old ButtonTemplate.
-         The Context exposes the hidden input's id so the label can
-         wire up via the "for" attribute automatically. -->
     <MudFileUpload T="IBrowserFile"
                    FilesChanged="HandleFileChanged"
                    Accept=".xlsx"
                    Disabled="isLoading">
         <ActivatorContent>
-            <MudButton Variant="Variant.Outlined"
+            <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.FileUpload"
-                       HtmlTag="label"
-                       for="@context.Id">
+                       StartIcon="@Icons.Material.Filled.FileUpload">
                 Pick file
             </MudButton>
         </ActivatorContent>
     </MudFileUpload>
 
-    <!-- file-name badge shown after a file is picked ----------- -->
+    <!-- file-name badge shown after a file is picked -->
     @if (selectedFileName != null)
     {
         <MudChip T="string"
@@ -43,7 +38,7 @@
         </MudChip>
     }
 
-    <!-- loading spinner ---------------------------------------- -->
+    <!-- loading spinner -->
     @if (isLoading)
     {
         <MudProgressCircular Color="Color.Primary" Indeterminate Class="mt-4" />
@@ -72,11 +67,11 @@
             </MudItem>
         </MudGrid>
 
-        <MudButton Variant="Variant.Contained"
+        <MudButton Variant="Variant.Filled"
                    Color="Color.Secondary"
                    StartIcon="@Icons.Material.Filled.TableView"
                    Class="mt-4"
-                   Href="/dashboard">
+                   Href="/dashboard/projects">
             View Dashboard
         </MudButton>
     </MudPaper>
@@ -129,18 +124,14 @@
     </MudPaper>
 }
 
-<!-- ── @code block ─────────────────────────────────────────── -->
 @code {
     private bool isLoading;
     private string? selectedFileName;
     private int importedCount;
     private List<PersonRecord>? previewRecords;
 
-    // MudBlazor 8 MudFileUpload fires FilesChanged with the file
-    // directly (not wrapped in an EventArgs).
     private async Task HandleFileChanged(IBrowserFile? file)
     {
-        // Reset previous state
         selectedFileName = null;
         importedCount    = 0;
         previewRecords   = null;
@@ -148,7 +139,6 @@
 
         try
         {
-            // ── basic validation ────────────────────────────────
             if (file == null)
             {
                 Snackbar.Add("No file was selected.", Severity.Warning);
@@ -164,13 +154,11 @@
 
             selectedFileName = file.Name;
 
-            // ── stream the file into a MemoryStream ─────────────
-            using var browserStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10 MB
+            using var browserStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             using var memoryStream  = new MemoryStream();
             await browserStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
-            // ── hand off to the singleton service ───────────────
             importedCount = await ExcelDataService.ImportFromExcelAsync(memoryStream);
 
             if (importedCount == 0)
@@ -179,7 +167,6 @@
                 return;
             }
 
-            // ── grab up to 10 rows for the on-page preview ─────
             previewRecords = ExcelDataService.GetRecords().Take(10).ToList();
 
             Snackbar.Add(

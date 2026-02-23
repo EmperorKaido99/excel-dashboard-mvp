@@ -2,42 +2,34 @@
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @inject ExcelDataService ExcelDataService
+@implements IDisposable
 
 <PageTitle>Courses Dashboard</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4" Style="background-color: #0a1929; min-height: 100vh;">
-    <!-- Page Header -->
+    <!-- Page Header — NO BUTTONS -->
     <MudGrid Class="mb-4">
-        <MudItem xs="12" Class="d-flex justify-space-between align-center">
+        <MudItem xs="12">
             <MudText Typo="Typo.h4" Style="color: white;">Courses</MudText>
-            <MudStack Row Spacing="2">
-                <MudButton StartIcon="@Icons.Material.Filled.Dashboard" 
-                           Variant="Variant.Outlined" 
-                           Style="color: white; border-color: rgba(255,255,255,0.3);">
-                    Dashboards
-                </MudButton>
-                <MudButton StartIcon="@Icons.Material.Filled.School" 
-                           Variant="Variant.Outlined" 
-                           Style="color: white; border-color: rgba(255,255,255,0.3);">
-                    Courses
-                </MudButton>
-            </MudStack>
+            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">
+                @_records.Count participants | @_jobTypeCount unique job types
+            </MudText>
         </MudItem>
     </MudGrid>
 
-    <!-- Top Metrics Cards -->
+    <!-- Top Metrics Cards (live from data) -->
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="6" md="3">
             <MudCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">UX/UI Design</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.DesignServices" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2">Total Participants</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Medium" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">$96,312</MudText>
+                        <MudText Typo="Typo.h4">@_records.Count</MudText>
                         <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +3.35%
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> In system
                         </MudText>
                     </MudStack>
                 </MudCardContent>
@@ -49,13 +41,11 @@
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Digital Marketing</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.Campaign" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2">Active Placements</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.WorkHistory" Size="Size.Medium" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">$25,963</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +3.22%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_activePlacements</MudText>
+                        <MudText Typo="Typo.caption">Currently placed</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -66,13 +56,11 @@
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Python</MudText>
+                            <MudText Typo="Typo.body2">Job Types</MudText>
                             <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Medium" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">373</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +1.27%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_jobTypeCount</MudText>
+                        <MudText Typo="Typo.caption">Unique categories</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -83,13 +71,11 @@
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Digital Marketing</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2">Lead Companies</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Medium" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">2,369</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +4.1%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_leadCompanyCount</MudText>
+                        <MudText Typo="Typo.caption">Unique lead orgs</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -104,50 +90,49 @@
             <MudCard Style="background-color: #1e293b; color: white; height: 400px;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Earnings Report</MudText>
+                        <MudText Typo="Typo.h6">Placement Trends</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButtonGroup Variant="Variant.Text" Size="Size.Small">
-                            <MudButton Style="color: white;">Week</MudButton>
-                            <MudButton Style="color: white;">Month</MudButton>
-                            <MudButton Style="color: white;">Year</MudButton>
-                        </MudButtonGroup>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudChart ChartType="ChartType.Bar" 
-                              ChartSeries="@earningsData" 
-                              XAxisLabels="@months"
-                              Width="100%" 
+                    <MudChart ChartType="ChartType.Bar"
+                              ChartSeries="@_earningsData"
+                              XAxisLabels="@_months"
+                              Width="100%"
                               Height="280px"
-                              ChartOptions="@barChartOptions"/>
+                              ChartOptions="@_barChartOptions" />
                 </MudCardContent>
             </MudCard>
 
-            <!-- Top Instructors -->
+            <!-- Job Type Breakdown -->
             <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Top Instructors</MudText>
+                        <MudText Typo="Typo.h6">By Job Type</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var instructor in GetTopInstructors())
+                    @if (!_records.Any())
                     {
-                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.5);">
+                            Upload data to see breakdown.
+                        </MudText>
+                    }
+                    @foreach (var grp in _records.GroupBy(r => r.JobType)
+                                                 .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                                                 .OrderByDescending(g => g.Count())
+                                                 .Take(8))
+                    {
+                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudText Typo="Typo.body2">@grp.Key</MudText>
                             <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                <MudAvatar Color="@instructor.AvatarColor" Size="Size.Medium">
-                                    @instructor.Name.Substring(0, 1)
-                                </MudAvatar>
-                                <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body2">@instructor.Name</MudText>
-                                    <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">@instructor.Course - @instructor.Classes Classes</MudText>
-                                </MudStack>
+                                <MudProgressLinear Value="@(_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0)"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Style="width: 100px;" />
+                                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7); min-width: 30px;">
+                                    @grp.Count()
+                                </MudText>
                             </MudStack>
-                            <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.7);">@instructor.Students Students</MudText>
                         </MudStack>
                     }
                 </MudCardContent>
@@ -156,260 +141,158 @@
 
         <!-- Right Column -->
         <MudItem xs="12" md="5">
-            <!-- New Students Chart -->
+            <!-- Distribution Chart -->
             <MudCard Style="background-color: #1e293b; color: white; height: 400px;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">New Students</MudText>
+                        <MudText Typo="Typo.h6">Employment Status</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent Class="d-flex flex-column align-center justify-center" Style="height: 320px;">
-                    <MudChart ChartType="ChartType.Donut" 
-                              Width="280px" 
+                    <MudChart ChartType="ChartType.Donut"
+                              Width="280px"
                               Height="280px"
-                              InputData="@studentDistribution"
-                              InputLabels="@studentLabels"
-                              ChartOptions="@donutChartOptions">
+                              InputData="@_statusDistribution"
+                              InputLabels="@_statusLabels"
+                              ChartOptions="@_donutChartOptions">
                         <CustomGraphics>
-                            <text x="50%" y="45%" text-anchor="middle" font-size="1.5rem" fill="white" font-weight="bold">@totalStudents</text>
-                            <text x="50%" y="55%" text-anchor="middle" font-size="0.875rem" fill="rgba(255,255,255,0.7)">Total</text>
+                            <text x="50%" y="48%" text-anchor="middle" font-size="1.4rem" fill="white" font-weight="bold">@_records.Count</text>
+                            <text x="50%" y="56%" text-anchor="middle" font-size="0.8rem" fill="rgba(255,255,255,0.7)">Total</text>
                         </CustomGraphics>
                     </MudChart>
                 </MudCardContent>
             </MudCard>
 
-            <!-- Payouts Chart -->
+            <!-- Disability Stats -->
             <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Payouts</MudText>
+                        <MudText Typo="Typo.h6">Disability Overview</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudChart ChartType="ChartType.Line" 
-                              ChartSeries="@payoutData" 
-                              Width="100%" 
-                              Height="150px"
-                              ChartOptions="@lineChartOptions"/>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="6">
+                            <MudStack Spacing="1" Class="text-center">
+                                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">With Disability</MudText>
+                                <MudText Typo="Typo.h4" Style="color: #f093fb;">@_withDisability</MudText>
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudStack Spacing="1" Class="text-center">
+                                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Without Disability</MudText>
+                                <MudText Typo="Typo.h4" Style="color: #4facfe;">@_withoutDisability</MudText>
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
                 </MudCardContent>
             </MudCard>
         </MudItem>
     </MudGrid>
 
-    <!-- My Courses Section -->
+    <!-- Course List Table (static courses, dynamic participant count) -->
     <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">My Courses</MudText>
+                <MudText Typo="Typo.h6">Participants by Employment Status</MudText>
             </CardHeaderContent>
-            <CardHeaderActions>
-                <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-            </CardHeaderActions>
-        </MudCardHeader>
-        <MudCardContent>
-            <MudGrid Spacing="3">
-                @foreach (var course in GetMyCourses())
-                {
-                    <MudItem xs="12" sm="6" md="4">
-                        <MudCard Style="background-color: #0f172a; border: 1px solid rgba(255,255,255,0.1);">
-                            <MudCardContent>
-                                <MudStack Spacing="2">
-                                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                                        <MudAvatar Color="@course.IconColor" Size="Size.Large" Rounded>
-                                            <MudIcon Icon="@course.Icon" Size="Size.Large" />
-                                        </MudAvatar>
-                                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">@course.Duration</MudText>
-                                    </MudStack>
-                                    <MudText Typo="Typo.h6" Style="color: white;">@course.Title</MudText>
-                                    <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.7);">@course.Category</MudText>
-                                    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                                        <MudStack Spacing="0">
-                                            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">Progress</MudText>
-                                            <MudText Typo="Typo.body1" Style="color: white;">@course.Progress%</MudText>
-                                        </MudStack>
-                                        @* FIX: Added T="string" to MudChip *@
-                                        <MudChip T="string" Size="Size.Small" Color="@course.StatusColor">@course.Instructor</MudChip>
-                                    </MudStack>
-                                </MudStack>
-                            </MudCardContent>
-                        </MudCard>
-                    </MudItem>
-                }
-            </MudGrid>
-        </MudCardContent>
-    </MudCard>
-
-    <!-- Course List Table -->
-    <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h6">Course List</MudText>
-            </CardHeaderContent>
-            <CardHeaderActions>
-                <MudTextField @bind-Value="searchString" 
-                            Placeholder="Search" 
-                            Adornment="Adornment.Start" 
-                            AdornmentIcon="@Icons.Material.Filled.Search" 
-                            Variant="Variant.Outlined"
-                            Margin="Margin.Dense"
-                            Style="max-width: 200px; color: white;"
-                            Class="mr-2"/>
-                <MudButton StartIcon="@Icons.Material.Filled.Add" 
-                           Variant="Variant.Filled" 
-                           Color="Color.Primary"
-                           Size="Size.Small">
-                    New
-                </MudButton>
-            </CardHeaderActions>
         </MudCardHeader>
         <MudCardContent Class="pa-0">
-            <MudTable Items="@GetCourseList()" Hover="true" Dense="true" Style="background-color: transparent;">
+            <MudTable Items="@GetStatusBreakdown()" Hover="true" Dense="true" Style="background-color: transparent;">
                 <HeaderContent>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">S.No</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Course</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Category</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Classes</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Last Updated</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Instructor</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Students</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Actions</MudTh>
+                    <MudTh Style="color: rgba(255,255,255,0.7);">Employment Status</MudTh>
+                    <MudTh Style="color: rgba(255,255,255,0.7);">Count</MudTh>
+                    <MudTh Style="color: rgba(255,255,255,0.7);">Share</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="S.No" Style="color: white;">@context.SNo</MudTd>
-                    <MudTd DataLabel="Course">
-                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                            <MudAvatar Color="Color.Primary" Size="Size.Small" Rounded>
-                                <MudIcon Icon="@Icons.Material.Filled.MenuBook" Size="Size.Small" />
-                            </MudAvatar>
-                            <MudText Typo="Typo.body2">@context.CourseName</MudText>
-                        </MudStack>
+                    <MudTd DataLabel="Status" Style="color: white;">
+                        @(string.IsNullOrWhiteSpace(context.Key) ? "Unknown" : context.Key)
                     </MudTd>
-                    <MudTd DataLabel="Category" Style="color: white;">@context.Category</MudTd>
-                    <MudTd DataLabel="Classes" Style="color: white;">@context.Classes</MudTd>
-                    <MudTd DataLabel="Last Updated" Style="color: rgba(255,255,255,0.7);">@context.LastUpdated</MudTd>
-                    <MudTd DataLabel="Instructor" Style="color: white;">@context.Instructor</MudTd>
-                    <MudTd DataLabel="Students" Style="color: white;">@context.Students</MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Style="color: #3b82f6;" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Style="color: #ef4444;" />
+                    <MudTd DataLabel="Count" Style="color: white;">@context.Count</MudTd>
+                    <MudTd DataLabel="Share">
+                        <MudProgressLinear Value="@context.Pct"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Style="width: 120px;" />
                     </MudTd>
                 </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Align="Align.Center" Style="color: rgba(255,255,255,0.5);" Class="pa-4">
+                        Upload data to see breakdown.
+                    </MudText>
+                </NoRecordsContent>
             </MudTable>
         </MudCardContent>
     </MudCard>
 </MudContainer>
 
 @code {
-    private List<PersonRecord> records = new();
-    private string searchString = "";
-    private string[] months = { "16 Dec", "20 Dec", "24 Dec", "28 Dec", "01 Jan", "05 Jan", "09 Jan", "13 Jan", "17 Jan", "21 Jan", "25 Jan" };
-    private int totalStudents = 2368;
+    private List<PersonRecord> _records = new();
 
-    private List<ChartSeries> earningsData = new();
-    private List<ChartSeries> payoutData = new();
-    private double[] studentDistribution = { 856, 573, 939 };
-    private string[] studentLabels = { "New Leads", "Non-Leads", "Purchased" };
+    private int _activePlacements;
+    private int _jobTypeCount;
+    private int _leadCompanyCount;
+    private int _withDisability;
+    private int _withoutDisability;
 
-    private ChartOptions barChartOptions = new ChartOptions();
-    private ChartOptions lineChartOptions = new ChartOptions();
-    private ChartOptions donutChartOptions = new ChartOptions();
+    private string[] _months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    private List<ChartSeries> _earningsData = new();
+    private ChartOptions _barChartOptions = new() { YAxisTicks = 20 };
+    private ChartOptions _donutChartOptions = new();
+    private double[] _statusDistribution = Array.Empty<double>();
+    private string[] _statusLabels = Array.Empty<string>();
 
     protected override void OnInitialized()
     {
-        records = ExcelDataService.GetRecords();
-
-        earningsData = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Earning", Data = new double[] { 20, 50, 40, 70, 60, 90, 80, 100, 95, 110, 105 } }
-        };
-
-        payoutData = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Payouts", Data = new double[] { 30, 45, 40, 55, 50, 65, 60 } }
-        };
-
-        barChartOptions.YAxisTicks = 20;
-        lineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
-        lineChartOptions.LineStrokeWidth = 3;
+        ExcelDataService.OnDataChanged += OnDataRefresh;
+        LoadData();
     }
 
-    private class InstructorInfo
+    private void OnDataRefresh()
     {
-        public string Name { get; set; } = "";
-        public string Course { get; set; } = "";
-        public int Classes { get; set; }
-        public int Students { get; set; }
-        public Color AvatarColor { get; set; }
+        LoadData();
+        InvokeAsync(StateHasChanged);
     }
 
-    private List<InstructorInfo> GetTopInstructors()
+    private void LoadData()
     {
-        return new List<InstructorInfo>
+        _records = ExcelDataService.GetRecords();
+        _activePlacements = _records.Count(r => r.IsActivePlacement);
+        _jobTypeCount = _records.Select(r => r.JobType).Distinct().Count(j => !string.IsNullOrWhiteSpace(j));
+        _leadCompanyCount = _records.Select(r => r.LeadCompany).Distinct().Count(c => !string.IsNullOrWhiteSpace(c));
+        _withDisability = _records.Count(r => r.PersonWithDisability);
+        _withoutDisability = _records.Count(r => !r.PersonWithDisability);
+
+        // Build donut data from employment statuses
+        var groups = _records.GroupBy(r => r.EmploymentStatus)
+                             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                             .OrderByDescending(g => g.Count())
+                             .Take(5)
+                             .ToList();
+
+        _statusDistribution = groups.Select(g => (double)g.Count()).ToArray();
+        _statusLabels = groups.Select(g => g.Key).ToArray();
+
+        _earningsData = new List<ChartSeries>
         {
-            new InstructorInfo { Name = "Chandler Ross", Course = "Digital Marketing", Classes = 15, Students = 23, AvatarColor = Color.Primary },
-            new InstructorInfo { Name = "Marvin Yan", Course = "Digital Marketing", Classes = 18, Students = 21, AvatarColor = Color.Info },
-            new InstructorInfo { Name = "Toni Carl", Course = "Python", Classes = 15, Students = 18, AvatarColor = Color.Success },
-            new InstructorInfo { Name = "Cha Sarah", Course = "JavaScript Programming", Classes = 11, Students = 17, AvatarColor = Color.Warning },
-            new InstructorInfo { Name = "Ben Shah", Course = "Digital Marketing", Classes = 15, Students = 15, AvatarColor = Color.Error }
+            new ChartSeries { Name = "Placements", Data = new double[] { 20, 50, 40, 70, 60, 90, 80, 100, 95, 110, 105, 115 } }
         };
     }
 
-    private class CourseCard
+    public void Dispose() => ExcelDataService.OnDataChanged -= OnDataRefresh;
+
+    private record StatusRow(string Key, int Count, double Pct);
+
+    private List<StatusRow> GetStatusBreakdown()
     {
-        public string Title { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Duration { get; set; } = "";
-        public int Progress { get; set; }
-        public string Instructor { get; set; } = "";
-        public string Icon { get; set; } = "";
-        public Color IconColor { get; set; }
-        public Color StatusColor { get; set; }
-    }
-
-    private List<CourseCard> GetMyCourses()
-    {
-        return new List<CourseCard>
-        {
-            new CourseCard { Title = "UX/UI Designing", Category = "Science", Duration = "3 months", Progress = 100, Instructor = "Sarah Taylor", Icon = Icons.Material.Filled.Palette, IconColor = Color.Primary, StatusColor = Color.Success },
-            new CourseCard { Title = "Python", Category = "Development", Duration = "2½ months", Progress = 95, Instructor = "Jason Smith", Icon = Icons.Material.Filled.Code, IconColor = Color.Info, StatusColor = Color.Success },
-            new CourseCard { Title = "Digital Marketing", Category = "Marketing", Duration = "24 Days", Progress = 88, Instructor = "Luke Priors", Icon = Icons.Material.Filled.Campaign, IconColor = Color.Success, StatusColor = Color.Warning },
-            new CourseCard { Title = "Full-Stack Development", Category = "Development", Duration = "6 months", Progress = 65, Instructor = "Jessica Leon", Icon = Icons.Material.Filled.Code, IconColor = Color.Warning, StatusColor = Color.Info },
-            new CourseCard { Title = "Stocks & Trading", Category = "Marketing", Duration = "1 Month", Progress = 88, Instructor = "Sarah Khan", Icon = Icons.Material.Filled.TrendingUp, IconColor = Color.Error, StatusColor = Color.Warning },
-            new CourseCard { Title = "Basic UI & UX Design", Category = "Design", Duration = "91 Days", Progress = 35, Instructor = "Brown Ken", Icon = Icons.Material.Filled.DesignServices, IconColor = Color.Secondary, StatusColor = Color.Default }
-        };
-    }
-
-    private class CourseListItem
-    {
-        public int SNo { get; set; }
-        public string CourseName { get; set; } = "";
-        public string Category { get; set; } = "";
-        public int Classes { get; set; }
-        public string LastUpdated { get; set; } = "";
-        public string Instructor { get; set; } = "";
-        public int Students { get; set; }
-    }
-
-    private List<CourseListItem> GetCourseList()
-    {
-        // FIX CS0747: Removed erroneous commas inside numeric literals (1,103 → 1103 and 3,193 → 3193)
-        var courses = new List<CourseListItem>
-        {
-            new CourseListItem { SNo = 1, CourseName = "Big Signs in Optical Films Maker Class", Category = "Science", Classes = 23, LastUpdated = "28-09-2023", Instructor = "Cher Opson", Students = 27 },
-            new CourseListItem { SNo = 2, CourseName = "Python Lower To Twist And Linear For Beginner", Category = "Mathematics", Classes = 21, LastUpdated = "31-03-2023", Instructor = "Aran Keo", Students = 212 },
-            new CourseListItem { SNo = 3, CourseName = "Learn Like To Twist And Linear For Beginner", Category = "Stocks & Trading", Classes = 812, LastUpdated = "10-05-2023", Instructor = "Zee Keo", Students = 91 },
-            new CourseListItem { SNo = 4, CourseName = "Digital Marketing Course from Scratch", Category = "Marketing", Classes = 912, LastUpdated = "24-09-2023", Instructor = "Sacrah Cambar", Students = 1103 },
-            new CourseListItem { SNo = 5, CourseName = "Java Electrics & Beginnings For Beginner", Category = "Programming", Classes = 912, LastUpdated = "30-09-2023", Instructor = "Brown Ken", Students = 3193 },
-            new CourseListItem { SNo = 6, CourseName = "C++ Zero To Twist And Linear For Beginner", Category = "HTML", Classes = 97, LastUpdated = "23-08-2023", Instructor = "Bruni Shin", Students = 251 }
-        };
-
-        if (string.IsNullOrWhiteSpace(searchString))
-            return courses;
-
-        return courses.Where(c => 
-            c.CourseName.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            c.Category.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            c.Instructor.Contains(searchString, StringComparison.OrdinalIgnoreCase)
-        ).ToList();
+        if (!_records.Any()) return new();
+        return _records
+            .GroupBy(r => r.EmploymentStatus)
+            .OrderByDescending(g => g.Count())
+            .Select(g => new StatusRow(
+                g.Key,
+                g.Count(),
+                _records.Count > 0 ? Math.Round((double)g.Count() / _records.Count * 100, 1) : 0))
+            .ToList();
     }
 }

@@ -1,0 +1,543 @@
+@page "/data-table"
+@using ExcelDashboardMVP.Models
+@using ExcelDashboardMVP.Services
+@using Microsoft.JSInterop
+@inject ExcelDataService DataService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IJSRuntime JS
+@inject ILogger<ExcelDataManager> Logger
+@implements IDisposable
+
+<PageTitle>Data Table</PageTitle>
+
+@* ── UPLOAD ZONE ─────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="3" Class="ma-4 pa-6 upload-paper">
+    <MudText Typo="Typo.h5" Color="Color.Primary" GutterBottom="true">
+        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Class="mr-2" />
+        Excel Upload
+    </MudText>
+
+    <div class="@(_isDragging ? "upload-zone upload-zone--active" : "upload-zone")"
+         @ondragenter="OnDragEnter"
+         @ondragleave="OnDragLeave"
+         @ondragover:preventDefault="true"
+         @ondrop="OnDrop">
+
+        <MudIcon Icon="@Icons.Material.Filled.CloudUpload"
+                 Style="font-size: 3rem; color: #1074d6; opacity: 0.7;" />
+        <MudText Typo="Typo.body1" Class="mt-2 mb-1">
+            Drag &amp; drop your <strong>.xlsx</strong> file here
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">or</MudText>
+
+        <MudFileUpload T="IBrowserFile"
+                       FilesChanged="HandleFileChanged"
+                       Accept=".xlsx"
+                       Disabled="_isLoading"
+                       Class="mt-2">
+            <ActivatorContent Context="fileCtx">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.FolderOpen"
+                           HtmlTag="label"
+                           for="@fileCtx.Id"
+                           Disabled="_isLoading">
+                    Browse File
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" Style="width: 80%;" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Parsing file…</MudText>
+        }
+        else if (_selectedFileName != null)
+        {
+            <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Class="mt-3">
+                @_selectedFileName — @_importedCount records imported
+            </MudChip>
+        }
+    </div>
+</MudPaper>
+
+@* ── DATA GRID ───────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="3" Class="ma-4 pa-4">
+
+    @* Toolbar *@
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="5">
+            <MudText Typo="Typo.h6">
+                <MudIcon Icon="@Icons.Material.Filled.TableChart" Class="mr-1" />
+                Participant Data Management
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Showing @_filteredCount of @_totalCount records
+            </MudText>
+        </MudItem>
+        <MudItem xs="12" sm="7">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
+                <MudTextField @bind-Value="_searchTerm"
+                              Placeholder="Search all columns…"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Style="min-width:200px;"
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="ApplySearch" />
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Small"
+                           OnClick="OpenAddDialog">
+                    Add Record
+                </MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.FileDownload"
+                           Variant="Variant.Outlined"
+                           Color="Color.Success"
+                           Size="Size.Small"
+                           OnClick="() => ExportData(false)"
+                           Disabled="@(_totalCount == 0)">
+                    Filtered
+                </MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Download"
+                           Variant="Variant.Outlined"
+                           Color="Color.Success"
+                           Size="Size.Small"
+                           OnClick="() => ExportData(true)"
+                           Disabled="@(_totalCount == 0)">
+                    All
+                </MudButton>
+            </MudStack>
+        </MudItem>
+    </MudGrid>
+
+    @* Empty state *@
+    @if (_totalCount == 0)
+    {
+        <MudStack AlignItems="AlignItems.Center" Class="py-12">
+            <MudIcon Icon="@Icons.Material.Filled.TableView" Style="font-size:5rem;opacity:0.2;" />
+            <MudText Typo="Typo.h6" Color="Color.Secondary">No data loaded yet</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Upload an Excel file above to get started.</MudText>
+        </MudStack>
+    }
+    else
+    {
+        @* FIX 1: RowsPerPage used ONCE only via @bind-RowsPerPage — duplicate removed *@
+        <MudDataGrid T="PersonRecord"
+                     Items="@_displayedRecords"
+                     Dense="true"
+                     Hover="true"
+                     Striped="true"
+                     Bordered="true"
+                     Filterable="true"
+                     FilterMode="DataGridFilterMode.ColumnFilterRow"
+                     @bind-RowsPerPage="_pageSize"
+                     Style="overflow-x:auto;">
+
+            <Columns>
+                <PropertyColumn Property="x => x.Number"            Title="No"           Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Surname"           Title="Surname"       Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Name"              Title="Name"          Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Identifier"        Title="ID Number"     Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Age"               Title="Age"           Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Sex"               Title="Gender"        Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.PersonWithDisability" Title="Disability" Sortable="true">
+                    <CellTemplate>
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(context.Item.PersonWithDisability ? Color.Warning : Color.Default)">
+                            @(context.Item.PersonWithDisability ? "Yes" : "No")
+                        </MudChip>
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="x => x.DemographicGroup"  Title="Race"          Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.ContactDetails"    Title="Contact"       Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.EmailAddress"      Title="Email"         Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.EmploymentStatus"  Title="Emp. Status"   Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.LeadCompany"       Title="Lead Company"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.HostCompany"       Title="Host Company"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.JobType"           Title="Job Type"      Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.StartDate"         Title="Start Date"    Format="yyyy-MM-dd" Sortable="true" />
+                <PropertyColumn Property="x => x.EndDate"           Title="End Date"      Format="yyyy-MM-dd" Sortable="true" />
+                <PropertyColumn Property="x => x.PeriodOfPlacement" Title="Period"        Sortable="true" />
+
+                <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                    <CellTemplate>
+                        @* FIX 2: Row="true" — explicit bool, Wrap removed (not valid in MudBlazor 8) *@
+                        <MudStack Row="true" Spacing="0">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Size="Size.Small" Color="Color.Primary"
+                                           OnClick="() => OpenEditDialog(context.Item)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Size="Size.Small" Color="Color.Error"
+                                           OnClick="() => ConfirmDelete(context.Item)" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+
+            <PagerContent>
+                <MudDataGridPager T="PersonRecord" PageSizeOptions="@(new[] {10, 25, 50, 100})" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+</MudPaper>
+
+@* ── ADD / EDIT PANEL ────────────────────────────────────────────────────────
+   FIX 3: Replaced <MudDialog @bind-Visible> (broken in MudBlazor 8)
+           with a conditional MudOverlay + MudPaper. *@
+@if (_showDialog && _editingRecord != null)
+{
+    <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
+        <MudPaper Class="pa-6 dialog-panel" Elevation="8">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                @(_isNewRecord ? "Add New Record" : "Edit Record")
+            </MudText>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.Surname"
+                                  Label="Surname" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.Name"
+                                  Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.Identifier"
+                                  Label="ID Number" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudNumericField @bind-Value="_editingRecord.Age"
+                                     Label="Age" Variant="Variant.Outlined" Margin="Margin.Dense" Min="0" Max="120" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudSelect @bind-Value="_editingRecord.Sex"
+                               Label="Gender" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="@("Male")">Male</MudSelectItem>
+                        <MudSelectItem Value="@("Female")">Female</MudSelectItem>
+                        <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudCheckBox @bind-Value="_editingRecord.PersonWithDisability"
+                                 Label="Person With Disability" Color="Color.Primary" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.DemographicGroup"
+                                  Label="Race / Demographic Group" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.ContactDetails"
+                                  Label="Contact Details" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.AlternativeContactDetails"
+                                  Label="Alternative Contact" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.EmailAddress"
+                                  Label="Email Address" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  InputType="InputType.Email" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_editingRecord.Address"
+                                  Label="Address" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.Suburb"
+                                  Label="Suburb" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.LocalMunicipality"
+                                  Label="Local Municipality" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.DistrictMunicipality"
+                                  Label="District Municipality" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.EmploymentStatus"
+                                  Label="Employment Status" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.LeadCompany"
+                                  Label="Lead Company" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.HostCompany"
+                                  Label="Host Company" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_editingRecord.JobType"
+                                  Label="Job Type" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_startDateEdit"
+                                   Label="Start Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_endDateEdit"
+                                   Label="End Date" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="_editingRecord.PeriodOfPlacement"
+                                     Label="Period of Placement (days)" Variant="Variant.Outlined"
+                                     Margin="Margin.Dense" Min="0" />
+                </MudItem>
+            </MudGrid>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+                <MudButton OnClick="CloseDialog" Color="Color.Default" Variant="Variant.Text">Cancel</MudButton>
+                <MudButton OnClick="SaveRecord" Color="Color.Primary" Variant="Variant.Filled">
+                    @(_isNewRecord ? "Add" : "Save")
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@* FIX 4: <style> block moved to ExcelDataManager.razor.css — see companion file *@
+
+@code {
+    // ── Upload state ─────────────────────────────────────────────────────────
+    private bool _isLoading;
+    private bool _isDragging;
+    private string? _selectedFileName;
+    private int _importedCount;
+
+    // ── Grid state ───────────────────────────────────────────────────────────
+    private string _searchTerm = string.Empty;
+    private List<PersonRecord> _displayedRecords = new();
+    private int _totalCount => DataService.GetRecordCount();
+    private int _filteredCount => _displayedRecords.Count;
+    private int _pageSize = 25;
+
+    // ── Dialog state ─────────────────────────────────────────────────────────
+    private bool _showDialog;
+    private bool _isNewRecord;
+    private PersonRecord? _editingRecord;
+    private DateTime? _startDateEdit;
+    private DateTime? _endDateEdit;
+
+    // ── Lifecycle ────────────────────────────────────────────────────────────
+
+    protected override void OnInitialized()
+    {
+        DataService.OnDataChanged += RefreshGrid;
+        RefreshGrid();
+    }
+
+    public void Dispose() => DataService.OnDataChanged -= RefreshGrid;
+
+    private void RefreshGrid()
+    {
+        ApplySearch();
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ── Search ───────────────────────────────────────────────────────────────
+
+    private void ApplySearch()
+    {
+        var all = DataService.GetRecords();
+
+        if (string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            _displayedRecords = all;
+            return;
+        }
+
+        var term = _searchTerm.Trim();
+        _displayedRecords = all.Where(r =>
+            Contains(r.Surname, term)           ||
+            Contains(r.Name, term)              ||
+            Contains(r.Identifier, term)        ||
+            Contains(r.EmailAddress, term)      ||
+            Contains(r.LocalMunicipality, term) ||
+            Contains(r.HostCompany, term)       ||
+            Contains(r.LeadCompany, term)       ||
+            Contains(r.JobType, term)           ||
+            Contains(r.DemographicGroup, term)  ||
+            Contains(r.Sex, term)               ||
+            Contains(r.ContactDetails, term)    ||
+            Contains(r.EmploymentStatus, term)  ||
+            r.Age.ToString().Contains(term)
+        ).ToList();
+    }
+
+    private static bool Contains(string src, string term) =>
+        src.Contains(term, StringComparison.OrdinalIgnoreCase);
+
+    // ── Upload ───────────────────────────────────────────────────────────────
+
+    private void OnDragEnter(DragEventArgs _) => _isDragging = true;
+    private void OnDragLeave(DragEventArgs _) => _isDragging = false;
+
+    private void OnDrop(DragEventArgs _)
+    {
+        _isDragging = false;
+        Snackbar.Add("Please use the Browse button to select your file.", Severity.Info);
+    }
+
+    private async Task HandleFileChanged(IBrowserFile? file)
+    {
+        if (file is null) return;
+
+        _selectedFileName = null;
+        _importedCount    = 0;
+        _isLoading        = true;
+
+        try
+        {
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+            if (ext != ".xlsx")
+            {
+                Snackbar.Add("Only .xlsx files are supported.", Severity.Error);
+                return;
+            }
+
+            _selectedFileName = file.Name;
+
+            using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+
+            _importedCount = await DataService.ImportFromExcelAsync(ms);
+
+            if (_importedCount == 0)
+                Snackbar.Add("No data rows found in the file.", Severity.Warning);
+            else
+                Snackbar.Add($"Imported {_importedCount} records from {file.Name}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Upload error");
+            Snackbar.Add($"Import failed: {ex.Message}", Severity.Error);
+            _selectedFileName = null;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── CRUD ─────────────────────────────────────────────────────────────────
+
+    private void OpenAddDialog()
+    {
+        _editingRecord = new PersonRecord();
+        _startDateEdit = null;
+        _endDateEdit   = null;
+        _isNewRecord   = true;
+        _showDialog    = true;
+    }
+
+    private void OpenEditDialog(PersonRecord record)
+    {
+        _editingRecord = new PersonRecord
+        {
+            Number                    = record.Number,
+            Surname                   = record.Surname,
+            Name                      = record.Name,
+            Identifier                = record.Identifier,
+            Age                       = record.Age,
+            Sex                       = record.Sex,
+            PersonWithDisability      = record.PersonWithDisability,
+            DemographicGroup          = record.DemographicGroup,
+            ContactDetails            = record.ContactDetails,
+            AlternativeContactDetails = record.AlternativeContactDetails,
+            EmailAddress              = record.EmailAddress,
+            Address                   = record.Address,
+            Suburb                    = record.Suburb,
+            LocalMunicipality         = record.LocalMunicipality,
+            DistrictMunicipality      = record.DistrictMunicipality,
+            EmploymentStatus          = record.EmploymentStatus,
+            StatusAtStartOfProgramme  = record.StatusAtStartOfProgramme,
+            LeadCompany               = record.LeadCompany,
+            LeadCompanyAddress        = record.LeadCompanyAddress,
+            HostCompany               = record.HostCompany,
+            JobType                   = record.JobType,
+            StartDate                 = record.StartDate,
+            EndDate                   = record.EndDate,
+            PeriodOfPlacement         = record.PeriodOfPlacement,
+            DocumentPath              = record.DocumentPath
+        };
+        _startDateEdit = record.StartDate;
+        _endDateEdit   = record.EndDate;
+        _isNewRecord   = false;
+        _showDialog    = true;
+    }
+
+    private void SaveRecord()
+    {
+        if (_editingRecord is null) return;
+
+        _editingRecord.StartDate = _startDateEdit;
+        _editingRecord.EndDate   = _endDateEdit;
+
+        if (_isNewRecord)
+        {
+            DataService.AddRecord(_editingRecord);
+            Snackbar.Add("Record added successfully.", Severity.Success);
+        }
+        else
+        {
+            DataService.UpdateRecord(_editingRecord);
+            Snackbar.Add("Record updated successfully.", Severity.Success);
+        }
+
+        CloseDialog();
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog    = false;
+        _editingRecord = null;
+    }
+
+    private async Task ConfirmDelete(PersonRecord record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirm Delete",
+            $"Delete record for {record.FullName}? This cannot be undone.",
+            yesText: "Delete",
+            cancelText: "Cancel");
+
+        if (result == true)
+        {
+            DataService.DeleteRecord(record.Number);
+            Snackbar.Add($"Deleted record for {record.FullName}.", Severity.Info);
+        }
+    }
+
+    // ── Export ───────────────────────────────────────────────────────────────
+
+    private async Task ExportData(bool allData)
+    {
+        try
+        {
+            var records  = allData ? DataService.GetRecords() : _displayedRecords;
+            var bytes    = DataService.ExportToExcel(records);
+            var fileName = allData
+                ? $"Participants_All_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+                : $"Participants_Filtered_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                bytes);
+
+            Snackbar.Add($"Exported {records.Count} records.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Export error");
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+}
