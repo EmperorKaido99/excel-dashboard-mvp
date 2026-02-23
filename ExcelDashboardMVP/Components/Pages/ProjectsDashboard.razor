@@ -7,17 +7,16 @@
 <PageTitle>Projects Dashboard</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <!-- Page Header — NO BUTTONS -->
     <MudGrid Class="mb-4">
         <MudItem xs="12">
             <MudText Typo="Typo.h4" Color="Color.Primary">Projects</MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                @_records.Count participants loaded
+                @_records.Count participants loaded · Project Phoenix (Cohort 1–4) &amp; Project Lotus (Cohort 5)
             </MudText>
         </MudItem>
     </MudGrid>
 
-    <!-- Top Metrics Cards -->
+    <!-- Metrics Cards -->
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
@@ -35,7 +34,6 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
@@ -52,7 +50,6 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
@@ -69,7 +66,6 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Elevation="2">
                 <MudCardContent>
@@ -88,11 +84,10 @@
         </MudItem>
     </MudGrid>
 
-    <!-- Main Content Grid -->
+    <!-- Main Content -->
     <MudGrid Spacing="3">
-        <!-- Left Column -->
+        <!-- Left: Chart + Participants Table -->
         <MudItem xs="12" md="8">
-            <!-- Project Analysis Chart -->
             <MudCard Elevation="2" Class="mb-3">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -109,7 +104,6 @@
                 </MudCardContent>
             </MudCard>
 
-            <!-- Projects Summary Table -->
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -129,10 +123,7 @@
                 </MudCardHeader>
                 <MudCardContent Class="pa-0">
                     <MudTable Items="@GetFilteredProjects()"
-                              Hover="true"
-                              Dense="true"
-                              FixedHeader="true"
-                              Height="400px">
+                              Hover="true" Dense="true" FixedHeader="true" Height="400px">
                         <HeaderContent>
                             <MudTh>No</MudTh>
                             <MudTh>Name</MudTh>
@@ -154,8 +145,7 @@
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                                     <MudProgressLinear Color="@GetProgressColor(context.PeriodOfPlacement)"
                                                        Value="@context.PeriodOfPlacement"
-                                                       Size="Size.Small"
-                                                       Style="width: 80px;" />
+                                                       Size="Size.Small" Style="width: 80px;" />
                                     <MudText Typo="Typo.caption">@context.PeriodOfPlacement%</MudText>
                                 </MudStack>
                             </MudTd>
@@ -176,9 +166,10 @@
             </MudCard>
         </MudItem>
 
-        <!-- Right Column -->
+        <!-- Right: Team Members + Projects + Sponsors -->
         <MudItem xs="12" md="4">
-            <!-- Team Members -->
+
+            <!-- Team Members (hardcoded) -->
             <MudCard Elevation="2" Class="mb-3">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -186,78 +177,73 @@
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    @if (!_records.Any())
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">No data yet.</MudText>
-                    }
-                    @foreach (var member in _records.Take(5))
+                    @foreach (var m in _teamMembers)
                     {
                         <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                             <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                <MudAvatar Color="Color.Primary">@member.Name.Substring(0, 1)</MudAvatar>
+                                <MudAvatar Color="@m.AvatarColor" Size="Size.Medium">@m.Initial</MudAvatar>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body2">@member.FullName</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@member.JobType</MudText>
+                                    <MudText Typo="Typo.body2">@m.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@m.Role</MudText>
                                 </MudStack>
                             </MudStack>
-                            @if (member.IsActivePlacement)
-                            {
-                                <MudIcon Icon="@Icons.Material.Filled.Circle" Color="Color.Success" Size="Size.Small" />
-                            }
                         </MudStack>
                     }
                 </MudCardContent>
             </MudCard>
 
-            <!-- Demographics -->
+            <!-- Projects (hardcoded) -->
             <MudCard Elevation="2" Class="mb-3">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Demographics</MudText>
+                        <MudText Typo="Typo.h6">Projects</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var grp in _records.GroupBy(r => r.Sex).Take(5))
-                    {
-                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
-                            <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(grp.Key) ? "Unknown" : grp.Key)</MudText>
-                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                <MudProgressLinear Value="@((_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0))"
-                                                   Color="Color.Primary"
-                                                   Size="Size.Small"
-                                                   Style="width: 80px;" />
-                                <MudText Typo="Typo.caption">@grp.Count()</MudText>
-                            </MudStack>
-                        </MudStack>
-                    }
-                    @if (!_records.Any())
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">No data yet.</MudText>
-                    }
+                    <MudStack Spacing="2">
+                        <MudCard Outlined>
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Rocket" Color="Color.Primary" />
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body1">Project Phoenix</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Cohort 1 – 4</MudText>
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                        <MudCard Outlined>
+                            <MudCardContent>
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.LocalFlorist" Color="Color.Secondary" />
+                                    <MudStack Spacing="0">
+                                        <MudText Typo="Typo.body1">Project Lotus</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Cohort 5</MudText>
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
 
-            <!-- Recent Transactions placeholder -->
+            <!-- Sponsors (hardcoded) -->
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Recent Transactions</MudText>
+                        <MudText Typo="Typo.h6">Sponsors</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var t in _staticTransactions)
-                    {
-                        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
-                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                <MudAvatar Color="@t.Color">@t.Initial</MudAvatar>
-                                <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body2">@t.Name</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@t.Date</MudText>
-                                </MudStack>
-                            </MudStack>
-                            <MudText Typo="Typo.body1" Color="Color.Primary">@t.Amount</MudText>
-                        </MudStack>
-                    }
+                    <MudStack Row Spacing="1" Style="flex-wrap: wrap; gap: 8px;">
+                        @foreach (var sponsor in _sponsors)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary"
+                                     Icon="@Icons.Material.Filled.Star">
+                                @sponsor
+                            </MudChip>
+                        }
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -267,7 +253,6 @@
 @code {
     private List<PersonRecord> _records = new();
     private string _searchString = "";
-
     private int _completedCount;
     private int _activeCount;
     private int _hostCompanyCount;
@@ -276,13 +261,30 @@
     private List<ChartSeries> _projectAnalysisData = new();
     private ChartOptions _chartOptions = new ChartOptions { YAxisTicks = 20, MaxNumYAxisTicks = 5 };
 
-    private record TransactionItem(string Name, string Date, string Amount, string Initial, Color Color);
-    private List<TransactionItem> _staticTransactions = new()
+    // ── Hardcoded data ────────────────────────────────────────────────────────
+
+    private record TeamMember(string Name, string Role, string Initial, Color AvatarColor);
+
+    private readonly List<TeamMember> _teamMembers = new()
     {
-        new("Simon Cowell", "Sep 29, 2023", "$21,442", "S", Color.Primary),
-        new("Melissa Blue", "Mar 29, 2023", "$8,789", "M", Color.Info),
-        new("Gabriel Shin", "Mar 16, 2023", "$13,677", "G", Color.Success),
+        new("Amber Dunjwa",      "Admin · PA · AI Content Development", "A", Color.Primary),
+        new("Sibusiso Skhosana", "Facilitation · Recruitment",          "S", Color.Secondary),
+        new("Chulumanco Mbete",  "Platform Admin",                      "C", Color.Info),
+        new("Jessey Foster",     "AI Content Development",              "J", Color.Success),
+        new("Jordan Philips",    "AI Content Development",              "J", Color.Warning),
+        new("Rayhaan Arendse",   "Cloud Admin · AI Content Dev",        "R", Color.Error),
+        new("Naeemah Adams",     "Main Admin",                          "N", Color.Primary),
+        new("Mary",              "Senior Manager",                      "M", Color.Info),
+        new("Judy",              "Director",                            "J", Color.Secondary),
+        new("Magda",             "Consultant",                          "M", Color.Success),
     };
+
+    private readonly List<string> _sponsors = new()
+    {
+        "Collective X", "YES", "DEDAT", "Excellerate CPT"
+    };
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnInitialized()
     {
@@ -301,12 +303,13 @@
         _records = ExcelDataService.GetRecords();
         _completedCount = _records.Count(r => r.PeriodOfPlacement >= 100);
         _activeCount = _records.Count(r => r.IsActivePlacement);
-        _hostCompanyCount = _records.Select(r => r.HostCompany).Distinct().Count(c => !string.IsNullOrWhiteSpace(c));
-
+        _hostCompanyCount = _records.Select(r => r.HostCompany)
+                                    .Distinct()
+                                    .Count(c => !string.IsNullOrWhiteSpace(c));
         _projectAnalysisData = new List<ChartSeries>
         {
             new ChartSeries { Name = "Placements", Data = new double[] { 30, 50, 40, 35, 55, 60, 75 } },
-            new ChartSeries { Name = "Active", Data = new double[] { 25, 40, 35, 30, 45, 50, 65 } }
+            new ChartSeries { Name = "Active",     Data = new double[] { 25, 40, 35, 30, 45, 50, 65 } }
         };
     }
 
@@ -323,8 +326,8 @@
         ).ToList();
     }
 
-    private Color GetProgressColor(int progress) =>
-        progress >= 75 ? Color.Success : progress >= 50 ? Color.Primary : progress >= 25 ? Color.Warning : Color.Error;
+    private Color GetProgressColor(int p) =>
+        p >= 75 ? Color.Success : p >= 50 ? Color.Primary : p >= 25 ? Color.Warning : Color.Error;
 
     private Color GetStatusColor(PersonRecord r) =>
         r.PeriodOfPlacement >= 100 ? Color.Success : r.IsActivePlacement ? Color.Primary : Color.Warning;

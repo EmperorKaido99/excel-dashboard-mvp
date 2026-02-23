@@ -2,120 +2,141 @@
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @inject ExcelDataService ExcelDataService
+@implements IDisposable
 
 <PageTitle>Jobs Dashboard</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4" Style="background-color: #0a1929; min-height: 100vh;">
-    <!-- Page Header -->
+    <!-- Header -->
     <MudGrid Class="mb-4">
-        <MudItem xs="12" Class="d-flex justify-space-between align-center">
+        <MudItem xs="12">
             <MudText Typo="Typo.h4" Style="color: white;">Jobs</MudText>
-            <MudStack Row Spacing="2">
-                <MudButton StartIcon="@Icons.Material.Filled.Dashboard" 
-                           Variant="Variant.Outlined" 
-                           Style="color: white; border-color: rgba(255,255,255,0.3);">
-                    Dashboards
-                </MudButton>
-                <MudButton StartIcon="@Icons.Material.Filled.Work" 
-                           Variant="Variant.Outlined" 
-                           Style="color: white; border-color: rgba(255,255,255,0.3);">
-                    Jobs
-                </MudButton>
-            </MudStack>
+            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">
+                @_records.Count participants · @_maleCount male · @_femaleCount female
+            </MudText>
         </MudItem>
     </MudGrid>
 
-    <!-- Top Metrics Cards -->
+    <!-- Metrics -->
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="6" md="3">
             <MudCard Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <MudCardContent>
                     <MudStack Spacing="1">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Total Subscriptions</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Total Participants</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">2,329</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +11.01%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_records.Count</MudText>
+                        <MudText Typo="Typo.caption">In system</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                 <MudCardContent>
                     <MudStack Spacing="1">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Members</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Active Placements</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.WorkHistory" Size="Size.Small" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">4,028</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" /> -6.08%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_activeCount</MudText>
+                        <MudText Typo="Typo.caption">Currently placed</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                 <MudCardContent>
                     <MudStack Spacing="1">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Active Now</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Host Companies</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">1,116</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +0.49%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_hostCompanyCount</MudText>
+                        <MudText Typo="Typo.caption">Unique companies</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
-
         <MudItem xs="12" sm="6" md="3">
             <MudCard Style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
                 <MudCardContent>
                     <MudStack Spacing="1">
                         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Total Visitors</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Job Types</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" />
                         </MudStack>
-                        <MudText Typo="Typo.h4">1,488</MudText>
-                        <MudText Typo="Typo.caption">
-                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" /> +0.02%
-                        </MudText>
+                        <MudText Typo="Typo.h4">@_jobTypeCount</MudText>
+                        <MudText Typo="Typo.caption">Unique categories</MudText>
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
     </MudGrid>
 
-    <!-- Main Content Grid -->
     <MudGrid Spacing="3">
-        <!-- Left Column: Subscriptions Overview -->
+        <!-- Left Column -->
         <MudItem xs="12" md="6">
+
+            <!-- REPLACED: Subscriptions Overview → Placement Overview -->
             <MudCard Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Subscriptions Overview</MudText>
+                        <MudText Typo="Typo.h6">Placement Overview</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudChart ChartType="ChartType.Line" 
-                              ChartSeries="@subscriptionData" 
-                              XAxisLabels="@months"
-                              Width="100%" 
-                              Height="250px"
-                              ChartOptions="@lineChartOptions"/>
+                    @if (!_records.Any())
+                    {
+                        <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.5);">
+                            Upload data to see placement breakdown.
+                        </MudText>
+                    }
+                    else
+                    {
+                        @foreach (var grp in _records
+                            .GroupBy(r => r.HostCompany)
+                            .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                            .OrderByDescending(g => g.Count())
+                            .Take(7))
+                        {
+                            var pct = _records.Count > 0
+                                ? (double)grp.Count() / _records.Count * 100
+                                : 0;
+                            <MudStack Row Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center" Class="mb-2">
+                                <MudText Typo="Typo.body2"
+                                         Style="min-width:140px; white-space:nowrap;
+                                                overflow:hidden; text-overflow:ellipsis;">
+                                    @grp.Key
+                                </MudText>
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudProgressLinear Value="@pct"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       Style="width:100px;" />
+                                    <MudText Typo="Typo.caption"
+                                             Style="color:rgba(255,255,255,0.7);
+                                                    min-width:24px; text-align:right;">
+                                        @grp.Count()
+                                    </MudText>
+                                </MudStack>
+                            </MudStack>
+                        }
+                    }
+
+                    <MudDivider Class="my-3" Style="border-color: rgba(255,255,255,0.15);" />
+                    <MudText Typo="Typo.caption" Style="color:rgba(255,255,255,0.5);"
+                             Class="mb-2">Known Placement Partners</MudText>
+                    <MudStack Row Spacing="1" Style="flex-wrap:wrap; gap:6px;">
+                        @foreach (var p in _placements)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@p</MudChip>
+                        }
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
 
@@ -125,322 +146,357 @@
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">Top Companies</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudTable Items="@GetTopCompanies()" Hover="true" Dense="true" Style="background-color: transparent;">
+                    <MudTable Items="@_topCompanies" Hover="true" Dense="true"
+                              Style="background-color: transparent;">
                         <HeaderContent>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Name</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Subscription</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Total Employees</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Recruiter Since</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Action</MudTh>
+                            <MudTh Style="color:rgba(255,255,255,0.7);">Name</MudTh>
+                            <MudTh Style="color:rgba(255,255,255,0.7);">Type</MudTh>
+                            <MudTh Style="color:rgba(255,255,255,0.7);">Size</MudTh>
+                            <MudTh Style="color:rgba(255,255,255,0.7);">Since</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Name">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                                     <MudAvatar Color="Color.Info" Size="Size.Small">
-                                        <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Business"
+                                                 Size="Size.Small" />
                                     </MudAvatar>
                                     <MudStack Spacing="0">
                                         <MudText Typo="Typo.body2">@context.CompanyName</MudText>
-                                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">@context.Industry</MudText>
+                                        <MudText Typo="Typo.caption"
+                                                 Style="color:rgba(255,255,255,0.5);">
+                                            @context.Industry
+                                        </MudText>
                                     </MudStack>
                                 </MudStack>
                             </MudTd>
-                            <MudTd DataLabel="Subscription">
-                                @* FIX: Added T="string" to MudChip *@
-                                <MudChip T="string" Size="Size.Small" Color="@context.SubColor">@context.Subscription</MudChip>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@context.SubColor">
+                                    @context.Subscription
+                                </MudChip>
                             </MudTd>
-                            <MudTd DataLabel="Total Employees" Style="color: white;">@context.TotalEmployees</MudTd>
-                            <MudTd DataLabel="Recruiter Since" Style="color: white;">@context.RecruiterSince</MudTd>
-                            <MudTd DataLabel="Action">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Style="color: white;" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Style="color: white;" />
-                            </MudTd>
+                            <MudTd Style="color:white;">@context.TotalEmployees</MudTd>
+                            <MudTd Style="color:white;">@context.RecruiterSince</MudTd>
                         </RowTemplate>
                     </MudTable>
                 </MudCardContent>
             </MudCard>
         </MudItem>
 
-        <!-- Right Column: Recent Jobs & Recruiter Registrations -->
+        <!-- Right Column -->
         <MudItem xs="12" md="6">
-            <!-- Recent Jobs -->
+
+            <!-- Job Titles (hardcoded) -->
             <MudCard Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Recent Jobs</MudText>
+                        <MudText Typo="Typo.h6">Job Titles</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    @foreach (var job in GetRecentJobs().Take(5))
+                    <MudText Typo="Typo.caption"
+                             Style="color:rgba(255,255,255,0.5);" Class="mb-2">
+                        Programme Job Titles
+                    </MudText>
+                    <MudStack Row Spacing="1" Style="flex-wrap:wrap; gap:6px;" Class="mb-4">
+                        @foreach (var jt in _jobTitles)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@jt</MudChip>
+                        }
+                    </MudStack>
+
+                    @if (_records.Any())
                     {
-                        <MudCard Outlined Class="mb-2" Style="background-color: #0f172a; border-color: rgba(255,255,255,0.1);">
-                            <MudCardContent>
-                                <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                                    <MudStack Spacing="1" Style="flex: 1;">
-                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                            <MudAvatar Color="Color.Primary" Size="Size.Small">
-                                                <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" />
-                                            </MudAvatar>
-                                            <MudText Typo="Typo.body1" Style="color: white;">@job.Position</MudText>
-                                        </MudStack>
-                                        <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.7);">@job.Company</MudText>
-                                        <MudStack Row Spacing="1">
-                                            @* FIX: Added T="string" to MudChip *@
-                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.LocationOn" Style="background-color: rgba(255,255,255,0.1); color: white;">
-                                                @job.Location
-                                            </MudChip>
-                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Schedule" Style="background-color: rgba(255,255,255,0.1); color: white;">
-                                                @job.Type
-                                            </MudChip>
-                                        </MudStack>
-                                    </MudStack>
-                                    <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">@job.PostedDate</MudText>
-                                </MudStack>
-                            </MudCardContent>
-                        </MudCard>
+                        <MudDivider Class="mb-3" Style="border-color:rgba(255,255,255,0.15);" />
+                        <MudText Typo="Typo.caption"
+                                 Style="color:rgba(255,255,255,0.5);" Class="mb-2">
+                            From Uploaded Data
+                        </MudText>
+                        @foreach (var grp in _records
+                            .GroupBy(r => r.JobType)
+                            .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                            .OrderByDescending(g => g.Count())
+                            .Take(5))
+                        {
+                            <MudStack Row Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center" Class="mb-2">
+                                <MudText Typo="Typo.body2">@grp.Key</MudText>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="Color.Default">
+                                    @grp.Count()
+                                </MudChip>
+                            </MudStack>
+                        }
                     }
                 </MudCardContent>
             </MudCard>
 
-            <!-- Recent Recruiter Registrations -->
+            <!-- REPLACED: Candidates → Gender Ratio (Male/Female) -->
             <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Recent Recruiter Registrations</MudText>
+                        <MudText Typo="Typo.h6">Gender Ratio</MudText>
                     </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton Size="Size.Small" Variant="Variant.Text" Style="color: white;">View All</MudButton>
-                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudTable Items="@GetRecentRecruiters()" Hover="true" Dense="true" Style="background-color: transparent;">
-                        <HeaderContent>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Employee</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Enrollment</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Completed</MudTh>
-                            <MudTh Style="color: rgba(255,255,255,0.7);">Actions</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Employee">
-                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudAvatar Color="Color.Primary" Size="Size.Small">@context.Name.Substring(0, 1)</MudAvatar>
-                                    <MudStack Spacing="0">
-                                        <MudText Typo="Typo.body2">@context.FullName</MudText>
-                                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">@context.EmailAddress</MudText>
-                                    </MudStack>
+                    @if (!_records.Any())
+                    {
+                        <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.5);">
+                            Upload data to see gender breakdown.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <!-- Big numbers -->
+                        <MudGrid Spacing="2" Class="mb-4">
+                            <MudItem xs="6">
+                                <MudStack Spacing="1" Class="text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Man"
+                                             Size="Size.Large"
+                                             Style="color: #4facfe; font-size: 2.5rem;" />
+                                    <MudText Typo="Typo.caption"
+                                             Style="color:rgba(255,255,255,0.7);">Male</MudText>
+                                    <MudText Typo="Typo.h4"
+                                             Style="color: #4facfe;">@_maleCount</MudText>
+                                    <MudText Typo="Typo.caption"
+                                             Style="color:rgba(255,255,255,0.5);">
+                                        @MalePct%
+                                    </MudText>
                                 </MudStack>
-                            </MudTd>
-                            <MudTd DataLabel="Enrollment" Style="color: white;">@context.Number</MudTd>
-                            <MudTd DataLabel="Completed" Style="color: white;">@context.Age</MudTd>
-                            <MudTd DataLabel="Actions">
-                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Style="color: #3b82f6;" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Style="color: #ef4444;" />
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
+                            </MudItem>
+                            <MudItem xs="6">
+                                <MudStack Spacing="1" Class="text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Woman"
+                                             Size="Size.Large"
+                                             Style="color: #f093fb; font-size: 2.5rem;" />
+                                    <MudText Typo="Typo.caption"
+                                             Style="color:rgba(255,255,255,0.7);">Female</MudText>
+                                    <MudText Typo="Typo.h4"
+                                             Style="color: #f093fb;">@_femaleCount</MudText>
+                                    <MudText Typo="Typo.caption"
+                                             Style="color:rgba(255,255,255,0.5);">
+                                        @FemalePct%
+                                    </MudText>
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- Progress bars -->
+                        <MudText Typo="Typo.caption"
+                                 Style="color:rgba(255,255,255,0.5);" Class="mb-1">Male</MudText>
+                        <MudProgressLinear Value="@(MalePct)"
+                                           Color="Color.Info" Size="Size.Medium"
+                                           Class="mb-3" Rounded="true" />
+
+                        <MudText Typo="Typo.caption"
+                                 Style="color:rgba(255,255,255,0.5);" Class="mb-1">Female</MudText>
+                        <MudProgressLinear Value="@(FemalePct)"
+                                           Color="Color.Secondary" Size="Size.Medium"
+                                           Class="mb-1" Rounded="true" />
+
+                        @if (_otherCount > 0)
+                        {
+                            <MudText Typo="Typo.caption"
+                                     Style="color:rgba(255,255,255,0.5);" Class="mt-2 mb-1">
+                                Other / Unspecified
+                            </MudText>
+                            <MudProgressLinear Value="@OtherPct"
+                                               Color="Color.Default" Size="Size.Medium"
+                                               Rounded="true" />
+                        }
+                    }
                 </MudCardContent>
             </MudCard>
 
-            <!-- Candidates Statistics -->
+            <!-- Recent Participants -->
             <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Candidates</MudText>
+                        <MudText Typo="Typo.h6">Recent Participants</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudGrid Spacing="2">
-                        <MudItem xs="6">
-                            <MudStack Spacing="1" Class="text-center">
-                                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">Total Candidates</MudText>
-                                <MudText Typo="Typo.h4" Style="color: #3b82f6;">1,234</MudText>
-                                <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1">
-                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Color="Color.Success" />
-                                    <MudText Typo="Typo.caption" Color="Color.Success">+5.2%</MudText>
-                                </MudStack>
-                            </MudStack>
-                        </MudItem>
-                        <MudItem xs="6">
-                            <MudStack Spacing="1" Class="text-center">
-                                <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.7);">New Candidates</MudText>
-                                <MudText Typo="Typo.h4" Style="color: #10b981;">1,754</MudText>
-                                <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1">
-                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Color="Color.Success" />
-                                    <MudText Typo="Typo.caption" Color="Color.Success">+4.1%</MudText>
-                                </MudStack>
-                            </MudStack>
-                        </MudItem>
-                    </MudGrid>
-                    
-                    <MudDivider Class="my-3" Style="border-color: rgba(255,255,255,0.1);" />
-                    
-                    <div style="text-align: center;">
-                        <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.5);">Pam. 2 - Offline</MudText>
-                        <MudChart ChartType="ChartType.Line" 
-                                  ChartSeries="@candidateData" 
-                                  Width="100%" 
-                                  Height="120px"
-                                  ChartOptions="@smallLineChartOptions"/>
-                    </div>
+                    @if (!_records.Any())
+                    {
+                        <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.5);">
+                            No data yet.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="@_records.Take(5).ToList()" Hover="true" Dense="true"
+                                  Style="background-color: transparent;">
+                            <HeaderContent>
+                                <MudTh Style="color:rgba(255,255,255,0.7);">Name</MudTh>
+                                <MudTh Style="color:rgba(255,255,255,0.7);">Gender</MudTh>
+                                <MudTh Style="color:rgba(255,255,255,0.7);">Company</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Name">
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudAvatar Color="Color.Primary" Size="Size.Small">
+                                            @context.Name.Substring(0, 1)
+                                        </MudAvatar>
+                                        <MudText Typo="Typo.body2">@context.FullName</MudText>
+                                    </MudStack>
+                                </MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@(context.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase) ? Color.Secondary : Color.Info)">
+                                        @(string.IsNullOrWhiteSpace(context.Sex) ? "N/A" : context.Sex)
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd Style="color:white;">@context.HostCompany</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
                 </MudCardContent>
             </MudCard>
         </MudItem>
     </MudGrid>
 
-    <!-- Recent Employees Section -->
+    <!-- All Participants table -->
     <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">Recent Employees</MudText>
+                <MudText Typo="Typo.h6">All Participants</MudText>
             </CardHeaderContent>
             <CardHeaderActions>
-                <MudTextField @bind-Value="searchString" 
-                            Placeholder="Search" 
-                            Adornment="Adornment.Start" 
-                            AdornmentIcon="@Icons.Material.Filled.Search" 
-                            Variant="Variant.Outlined"
-                            Margin="Margin.Dense"
-                            Style="max-width: 200px; color: white;"
-                            Class="mr-2"/>
-                <MudButton StartIcon="@Icons.Material.Filled.Add" 
-                           Variant="Variant.Filled" 
-                           Color="Color.Primary"
-                           Size="Size.Small">
-                    New
-                </MudButton>
+                <MudTextField @bind-Value="_searchString"
+                              Placeholder="Search"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Style="max-width:200px;"
+                              Class="mr-2"
+                              Immediate="true"
+                              DebounceInterval="200" />
             </CardHeaderActions>
         </MudCardHeader>
         <MudCardContent Class="pa-0">
-            <MudTable Items="@GetRecentEmployees()" Hover="true" Dense="true" Style="background-color: transparent;">
+            <MudTable Items="@GetFilteredEmployees()" Hover="true" Dense="true"
+                      Style="background-color: transparent;">
                 <HeaderContent>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Employee</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Category</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Role</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Email</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Location</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Date</MudTh>
-                    <MudTh Style="color: rgba(255,255,255,0.7);">Action</MudTh>
+                    <MudTh Style="color:rgba(255,255,255,0.7);">Name</MudTh>
+                    <MudTh Style="color:rgba(255,255,255,0.7);">Gender</MudTh>
+                    <MudTh Style="color:rgba(255,255,255,0.7);">Role</MudTh>
+                    <MudTh Style="color:rgba(255,255,255,0.7);">Location</MudTh>
+                    <MudTh Style="color:rgba(255,255,255,0.7);">Start Date</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Employee">
+                    <MudTd DataLabel="Name">
                         <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                            <MudAvatar Color="Color.Primary" Size="Size.Small">@context.Name.Substring(0, 1)</MudAvatar>
+                            <MudAvatar Color="Color.Primary" Size="Size.Small">
+                                @context.Name.Substring(0, 1)
+                            </MudAvatar>
                             <MudText Typo="Typo.body2">@context.FullName</MudText>
                         </MudStack>
                     </MudTd>
-                    <MudTd DataLabel="Category">
-                        @* FIX: Added T="string" to MudChip *@
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.DemographicGroup</MudChip>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(context.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase) ? Color.Secondary : Color.Info)">
+                            @(string.IsNullOrWhiteSpace(context.Sex) ? "N/A" : context.Sex)
+                        </MudChip>
                     </MudTd>
-                    <MudTd DataLabel="Role" Style="color: white;">@context.JobType</MudTd>
-                    <MudTd DataLabel="Email" Style="color: rgba(255,255,255,0.7);">@context.EmailAddress</MudTd>
-                    <MudTd DataLabel="Location" Style="color: white;">@context.LocalMunicipality</MudTd>
-                    <MudTd DataLabel="Date" Style="color: rgba(255,255,255,0.7);">@context.StartDate?.ToString("dd MMM, yyyy")</MudTd>
-                    <MudTd DataLabel="Action">
-                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Style="color: #3b82f6;" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Style="color: #ef4444;" />
+                    <MudTd Style="color:white;">@context.JobType</MudTd>
+                    <MudTd Style="color:white;">@context.LocalMunicipality</MudTd>
+                    <MudTd Style="color:rgba(255,255,255,0.7);">
+                        @context.StartDate?.ToString("dd MMM yyyy")
                     </MudTd>
                 </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Align="Align.Center" Style="color:rgba(255,255,255,0.5);" Class="pa-4">
+                        No data — upload an Excel file via Uploads.
+                    </MudText>
+                </NoRecordsContent>
             </MudTable>
         </MudCardContent>
     </MudCard>
 </MudContainer>
 
 @code {
-    private List<PersonRecord> records = new();
-    private string searchString = "";
-    private string[] months = { "15 Jan", "22 Jan", "29 Jan", "05 Feb", "12 Feb", "19 Feb", "26 Feb", "05 Mar", "12 Mar" };
+    private List<PersonRecord> _records = new();
+    private string _searchString = "";
 
-    private List<ChartSeries> subscriptionData = new();
-    private List<ChartSeries> candidateData = new();
-    private ChartOptions lineChartOptions = new ChartOptions();
-    private ChartOptions smallLineChartOptions = new ChartOptions();
+    private int _activeCount;
+    private int _hostCompanyCount;
+    private int _jobTypeCount;
+    private int _maleCount;
+    private int _femaleCount;
+    private int _otherCount;
+
+    private double MalePct   => _records.Count > 0 ? Math.Round((double)_maleCount   / _records.Count * 100, 1) : 0;
+    private double FemalePct => _records.Count > 0 ? Math.Round((double)_femaleCount / _records.Count * 100, 1) : 0;
+    private double OtherPct  => _records.Count > 0 ? Math.Round((double)_otherCount  / _records.Count * 100, 1) : 0;
+
+    // ── Hardcoded data ────────────────────────────────────────────────────────
+
+    private readonly List<string> _placements = new()
+    {
+        "UWC", "Old Mutual", "CC", "FM", "BYC", "CallLab", "KPMG"
+    };
+
+    private readonly List<string> _jobTitles = new()
+    {
+        "Tech Support", "Cloud Admin", "Data Analyst"
+    };
+
+    private record CompanyInfo(
+        string CompanyName, string Industry,
+        string Subscription, Color SubColor,
+        int TotalEmployees, string RecruiterSince);
+
+    private readonly List<CompanyInfo> _topCompanies = new()
+    {
+        new("Collective X",    "Programme Sponsor",  "Partner", Color.Primary, 50,  "2023"),
+        new("Old Mutual",      "Financial Services", "Pro",     Color.Success, 230, "2023"),
+        new("KPMG",            "Professional Svcs",  "Pro",     Color.Info,    180, "2023"),
+        new("CallLab",         "BPO",                "Basic",   Color.Warning, 95,  "2023"),
+        new("Excellerate CPT", "Sponsor",            "Partner", Color.Primary, 40,  "2023"),
+    };
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     protected override void OnInitialized()
     {
-        records = ExcelDataService.GetRecords();
-
-        subscriptionData = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Sales", Data = new double[] { 100, 300, 250, 500, 400, 700, 600, 750, 900 } },
-            new ChartSeries { Name = "Ben Subscriptions", Data = new double[] { 50, 200, 150, 350, 300, 500, 450, 600, 750 } }
-        };
-
-        candidateData = new List<ChartSeries>
-        {
-            new ChartSeries { Name = "Candidates", Data = new double[] { 30, 45, 35, 50, 40, 55, 48 } }
-        };
-
-        lineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
-        smallLineChartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
-        // FIX CS1061: DisableLegend was removed in MudBlazor v7+; use ShowLegend = false instead
-        smallLineChartOptions.ShowLegend = false;
+        ExcelDataService.OnDataChanged += OnDataRefresh;
+        LoadData();
     }
 
-    private class CompanyInfo
+    private void OnDataRefresh()
     {
-        public string CompanyName { get; set; } = "";
-        public string Industry { get; set; } = "";
-        public string Subscription { get; set; } = "";
-        public Color SubColor { get; set; }
-        public int TotalEmployees { get; set; }
-        public string RecruiterSince { get; set; } = "";
+        LoadData();
+        InvokeAsync(StateHasChanged);
     }
 
-    private List<CompanyInfo> GetTopCompanies()
+    private void LoadData()
     {
-        return new List<CompanyInfo>
-        {
-            new CompanyInfo { CompanyName = "Chromium Pvt.Ltd", Industry = "SaaS Services", Subscription = "Basic", SubColor = Color.Info, TotalEmployees = 347, RecruiterSince = "21 Dec 2023" },
-            new CompanyInfo { CompanyName = "Infostream Pvt.Ltd", Industry = "SaaS Services", Subscription = "Pro", SubColor = Color.Success, TotalEmployees = 221, RecruiterSince = "15 Jun 2023" },
-            new CompanyInfo { CompanyName = "BluefyMail Pvt.Ltd", Industry = "SaaS Services", Subscription = "Basic", SubColor = Color.Info, TotalEmployees = 109, RecruiterSince = "02 Mar 2023" },
-            new CompanyInfo { CompanyName = "Rainbee Industries Inc", Industry = "SaaS Services", Subscription = "Trial", SubColor = Color.Warning, TotalEmployees = 103, RecruiterSince = "02 Mar 2023" }
-        };
+        _records = ExcelDataService.GetRecords();
+        _activeCount      = _records.Count(r => r.IsActivePlacement);
+        _hostCompanyCount = _records.Select(r => r.HostCompany).Distinct()
+                                    .Count(c => !string.IsNullOrWhiteSpace(c));
+        _jobTypeCount     = _records.Select(r => r.JobType).Distinct()
+                                    .Count(j => !string.IsNullOrWhiteSpace(j));
+        _maleCount   = _records.Count(r => r.Sex.Equals("Male",   StringComparison.OrdinalIgnoreCase));
+        _femaleCount = _records.Count(r => r.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase));
+        _otherCount  = _records.Count - _maleCount - _femaleCount;
     }
 
-    private class JobInfo
-    {
-        public string Position { get; set; } = "";
-        public string Company { get; set; } = "";
-        public string Location { get; set; } = "";
-        public string Type { get; set; } = "";
-        public string PostedDate { get; set; } = "";
-    }
+    public void Dispose() => ExcelDataService.OnDataChanged -= OnDataRefresh;
 
-    private List<JobInfo> GetRecentJobs()
+    private List<PersonRecord> GetFilteredEmployees()
     {
-        return new List<JobInfo>
-        {
-            new JobInfo { Position = "UI Designer", Company = "Airbnb Design", Location = "2 Germany", Type = "Full Time Trial", PostedDate = "Full Time Trial" },
-            new JobInfo { Position = "AWS Engineer", Company = "Legacy Director", Location = "Chennai", Type = "Part Time", PostedDate = "26 Jan" },
-            new JobInfo { Position = "PHP - Laravel Director", Company = "Dynamic Directives", Location = "Johannesburg", Type = "Full Time", PostedDate = "2 days" },
-            new JobInfo { Position = "Senior HR Manager", Company = "Central Markets", Location = "USA", Type = "Contract", PostedDate = "1 week" },
-            new JobInfo { Position = "Product Designer", Company = "Dynamic Security", Location = "UK", Type = "Remote", PostedDate = "3 days" }
-        };
-    }
-
-    private List<PersonRecord> GetRecentRecruiters()
-    {
-        return records.Take(5).ToList();
-    }
-
-    private List<PersonRecord> GetRecentEmployees()
-    {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return records.Take(5).ToList();
-
-        return records.Where(r => 
-            r.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            r.Surname.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
-            r.EmailAddress.Contains(searchString, StringComparison.OrdinalIgnoreCase)
-        ).Take(5).ToList();
+        var q = _records.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(_searchString))
+            q = q.Where(r =>
+                r.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                r.Surname.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                r.JobType.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                r.HostCompany.Contains(_searchString, StringComparison.OrdinalIgnoreCase));
+        return q.Take(25).ToList();
     }
 }

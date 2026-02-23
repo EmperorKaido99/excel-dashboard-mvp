@@ -79,8 +79,6 @@
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/bohbfcu346-{0}-w97mql0d9w-w97mql0d9w.gz
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/4969s9y77j-{0}-j8lzlu28q6-j8lzlu28q6.gz
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/amzkmjka34-{0}-u1n4jc5v46-u1n4jc5v46.gz
-/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/89x0japgv4-{0}-zy1dqb51pn-zy1dqb51pn.gz
-/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/rzk8h0z2tx-{0}-zy1dqb51pn-zy1dqb51pn.gz
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/staticwebassets.build.json
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/staticwebassets.build.json.cache
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/staticwebassets.development.json
@@ -92,3 +90,7 @@
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/ExcelDashboardMVP.pdb
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/ExcelDashboardMVP.genruntimeconfig.cache
 /workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/ref/ExcelDashboardMVP.dll
+/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/scopedcss/Components/Pages/ExcelDataManager.razor.rz.scp.css
+/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/5ykiisyxxf-{0}-arwo9479ea-arwo9479ea.gz
+/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/89x0japgv4-{0}-i0b3p3j5uj-i0b3p3j5uj.gz
+/workspaces/excel-dashboard-mvp/ExcelDashboardMVP/obj/Debug/net10.0/compressed/rzk8h0z2tx-{0}-i0b3p3j5uj-i0b3p3j5uj.gz
