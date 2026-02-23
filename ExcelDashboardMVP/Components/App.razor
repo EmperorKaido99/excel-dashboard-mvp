@@ -24,6 +24,20 @@
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     <!-- MudBlazor JS — must come after blazor.web.js -->
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <!-- Helper: download a byte array as a file -->
+    <script>
+        window.downloadFileFromBytes = function (fileName, contentType, byteArray) {
+            const blob = new Blob([new Uint8Array(byteArray)], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+    </script>
 </body>
 
 </html>

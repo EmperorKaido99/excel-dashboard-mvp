@@ -1,4 +1,5 @@
 @page "/upload"
+@rendermode InteractiveServer
 @using ExcelDashboardMVP.Services
 @using ExcelDashboardMVP.Models
 @inject ExcelDataService ExcelDataService
@@ -12,6 +13,7 @@
     <MudText Typo="Typo.h5" Color="Color.Primary" GutterBottom>Upload Excel File</MudText>
     <MudText Color="Color.Secondary" Class="mb-4">
         Select a <strong>.xlsx</strong> file to import person records into the system.
+        The data will be available across all dashboard pages immediately after upload.
     </MudText>
 
     <MudFileUpload T="IBrowserFile"
@@ -41,7 +43,7 @@
     <!-- loading spinner -->
     @if (isLoading)
     {
-        <MudProgressCircular Color="Color.Primary" Indeterminate Class="mt-4" />
+        <MudProgressLinear Color="Color.Primary" Indeterminate Class="mt-4" />
         <MudText Color="Color.Secondary" Class="mt-2">Parsing file…</MudText>
     }
 </MudPaper>
@@ -67,13 +69,20 @@
             </MudItem>
         </MudGrid>
 
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Secondary"
-                   StartIcon="@Icons.Material.Filled.TableView"
-                   Class="mt-4"
-                   Href="/dashboard/projects">
-            View Dashboard
-        </MudButton>
+        <MudStack Row Spacing="2" Class="mt-4">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.TableView"
+                       Href="/data-table">
+                View Data Table
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Dashboard"
+                       Href="/dashboard/projects">
+                View Dashboard
+            </MudButton>
+        </MudStack>
     </MudPaper>
 }
 
@@ -154,7 +163,7 @@
 
             selectedFileName = file.Name;
 
-            using var browserStream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var browserStream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
             using var memoryStream  = new MemoryStream();
             await browserStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
@@ -170,9 +179,9 @@
             previewRecords = ExcelDataService.GetRecords().Take(10).ToList();
 
             Snackbar.Add(
-                $"Successfully imported {importedCount} record{(importedCount == 1 ? "" : "s")} from {file.Name}.",
+                $"Successfully imported {importedCount} record{(importedCount == 1 ? "" : "s")} from {file.Name}. Navigate to Data Table to view all records.",
                 Severity.Success,
-                configure => { configure.ShowCloseIcon = true; });
+                configure => { configure.ShowCloseIcon = true; configure.VisibleStateDuration = 6000; });
         }
         catch (Exception ex)
         {

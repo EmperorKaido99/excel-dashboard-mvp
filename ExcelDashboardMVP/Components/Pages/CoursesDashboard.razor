@@ -1,4 +1,5 @@
 @page "/dashboard/courses"
+@rendermode InteractiveServer
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @inject ExcelDataService ExcelDataService
@@ -84,7 +85,7 @@
         <!-- Left Column -->
         <MudItem xs="12" md="7">
 
-            <!-- Skill Development Courses (hardcoded, REPLACES Earnings Report) -->
+            <!-- Skill Development Courses (hardcoded) -->
             <MudCard Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -166,83 +167,8 @@
         <!-- Right Column -->
         <MudItem xs="12" md="5">
 
-            <!-- Employment Status donut (live from upload) -->
-            <MudCard Style="background-color: #1e293b; color: white; height: 400px;">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Employment Status</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="d-flex flex-column align-center justify-center"
-                                Style="height: 320px;">
-                    @if (_statusDistribution.Length > 0)
-                    {
-                        <MudChart ChartType="ChartType.Donut"
-                                  Width="280px" Height="280px"
-                                  InputData="@_statusDistribution"
-                                  InputLabels="@_statusLabels"
-                                  ChartOptions="@_donutChartOptions">
-                            <CustomGraphics>
-                                <text x="50%" y="48%" text-anchor="middle"
-                                      font-size="1.4rem" fill="white"
-                                      font-weight="bold">@_records.Count</text>
-                                <text x="50%" y="56%" text-anchor="middle"
-                                      font-size="0.8rem"
-                                      fill="rgba(255,255,255,0.7)">Total</text>
-                            </CustomGraphics>
-                        </MudChart>
-                    }
-                    else
-                    {
-                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                            <MudIcon Icon="@Icons.Material.Filled.DonutLarge"
-                                     Style="font-size:4rem; opacity:0.2;" />
-                            <MudText Typo="Typo.body2"
-                                     Style="color:rgba(255,255,255,0.4);">
-                                Upload data to see chart
-                            </MudText>
-                        </MudStack>
-                    }
-                </MudCardContent>
-            </MudCard>
-
-            <!-- Disability Overview (live from upload) -->
-            <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Disability Overview</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudGrid Spacing="2">
-                        <MudItem xs="6">
-                            <MudStack Spacing="1" Class="text-center">
-                                <MudText Typo="Typo.caption"
-                                         Style="color:rgba(255,255,255,0.7);">
-                                    With Disability
-                                </MudText>
-                                <MudText Typo="Typo.h4" Style="color:#f093fb;">
-                                    @_withDisability
-                                </MudText>
-                            </MudStack>
-                        </MudItem>
-                        <MudItem xs="6">
-                            <MudStack Spacing="1" Class="text-center">
-                                <MudText Typo="Typo.caption"
-                                         Style="color:rgba(255,255,255,0.7);">
-                                    Without Disability
-                                </MudText>
-                                <MudText Typo="Typo.h4" Style="color:#4facfe;">
-                                    @_withoutDisability
-                                </MudText>
-                            </MudStack>
-                        </MudItem>
-                    </MudGrid>
-                </MudCardContent>
-            </MudCard>
-
-            <!-- Top Instructors (hardcoded, REPLACES New Student Payout) -->
-            <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
+            <!-- Top Instructors (hardcoded) -->
+            <MudCard Style="background-color: #1e293b; color: white;">
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">Top Instructors</MudText>
@@ -271,6 +197,48 @@
                                 Top
                             </MudChip>
                         </MudStack>
+                    }
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Participants by Course / Job Type breakdown -->
+            <MudCard Class="mt-3" Style="background-color: #1e293b; color: white;">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Participants by Course</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (!_records.Any())
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.School"
+                                     Style="font-size:4rem; opacity:0.2;" />
+                            <MudText Typo="Typo.body2"
+                                     Style="color:rgba(255,255,255,0.4);">
+                                Upload data to see course breakdown
+                            </MudText>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        @foreach (var grp in _records
+                            .GroupBy(r => r.JobType)
+                            .Where(g => !string.IsNullOrWhiteSpace(g.Key))
+                            .OrderByDescending(g => g.Count())
+                            .Take(7))
+                        {
+                            <MudStack Row Justify="Justify.SpaceBetween"
+                                      AlignItems="AlignItems.Center" Class="mb-2">
+                                <MudText Typo="Typo.body2"
+                                         Style="color:white; min-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    @grp.Key
+                                </MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                                    @grp.Count()
+                                </MudChip>
+                            </MudStack>
+                        }
                     }
                 </MudCardContent>
             </MudCard>
@@ -318,11 +286,6 @@
     private List<PersonRecord> _records = new();
     private int _activePlacements;
     private int _leadCompanyCount;
-    private int _withDisability;
-    private int _withoutDisability;
-    private ChartOptions _donutChartOptions = new();
-    private double[] _statusDistribution = Array.Empty<double>();
-    private string[] _statusLabels = Array.Empty<string>();
 
     // ── Hardcoded data ────────────────────────────────────────────────────────
 
@@ -366,18 +329,6 @@
         _activePlacements = _records.Count(r => r.IsActivePlacement);
         _leadCompanyCount = _records.Select(r => r.LeadCompany).Distinct()
                                     .Count(c => !string.IsNullOrWhiteSpace(c));
-        _withDisability    = _records.Count(r => r.PersonWithDisability);
-        _withoutDisability = _records.Count(r => !r.PersonWithDisability);
-
-        var groups = _records
-            .GroupBy(r => r.EmploymentStatus)
-            .Where(g => !string.IsNullOrWhiteSpace(g.Key))
-            .OrderByDescending(g => g.Count())
-            .Take(5)
-            .ToList();
-
-        _statusDistribution = groups.Select(g => (double)g.Count()).ToArray();
-        _statusLabels       = groups.Select(g => g.Key).ToArray();
     }
 
     public void Dispose() => ExcelDataService.OnDataChanged -= OnDataRefresh;

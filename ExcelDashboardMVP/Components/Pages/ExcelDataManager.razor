@@ -1,4 +1,5 @@
 @page "/data-table"
+@rendermode InteractiveServer
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @using Microsoft.JSInterop
@@ -124,7 +125,6 @@
     }
     else
     {
-        @* FIX 1: RowsPerPage used ONCE only via @bind-RowsPerPage — duplicate removed *@
         <MudDataGrid T="PersonRecord"
                      Items="@_displayedRecords"
                      Dense="true"
@@ -165,7 +165,6 @@
 
                 <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
                     <CellTemplate>
-                        @* FIX 2: Row="true" — explicit bool, Wrap removed (not valid in MudBlazor 8) *@
                         <MudStack Row="true" Spacing="0">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                            Size="Size.Small" Color="Color.Primary"
@@ -185,9 +184,7 @@
     }
 </MudPaper>
 
-@* ── ADD / EDIT PANEL ────────────────────────────────────────────────────────
-   FIX 3: Replaced <MudDialog @bind-Visible> (broken in MudBlazor 8)
-           with a conditional MudOverlay + MudPaper. *@
+@* ── ADD / EDIT PANEL ──────────────────────────────────────────────────────── *@
 @if (_showDialog && _editingRecord != null)
 {
     <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
@@ -298,8 +295,6 @@
         </MudPaper>
     </MudOverlay>
 }
-
-@* FIX 4: <style> block moved to ExcelDataManager.razor.css — see companion file *@
 
 @code {
     // ── Upload state ─────────────────────────────────────────────────────────
@@ -526,9 +521,12 @@
                 ? $"Participants_All_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
                 : $"Participants_Filtered_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
 
+            // Convert byte[] to int[] for JS interop (Blazor serialises byte[] as base64 by default)
+            var byteArray = bytes.Select(b => (int)b).ToArray();
+
             await JS.InvokeVoidAsync("downloadFileFromBytes", fileName,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                bytes);
+                byteArray);
 
             Snackbar.Add($"Exported {records.Count} records.", Severity.Success);
         }
