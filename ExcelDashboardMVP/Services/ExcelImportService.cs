@@ -1,11 +1,12 @@
 using OfficeOpenXml;
 using ExcelDashboardMVP.Models;
-using System.Globalization;
 
 namespace ExcelDashboardMVP.Services
 {
     /// <summary>
-    /// Service for importing PersonRecord data from Excel files
+    /// Legacy import service — kept for backward compatibility with Import.razor.
+    /// For the main data pipeline, use ExcelDataService which supports header-name mapping.
+    /// This service uses position-based parsing aligned to the new 13-column structure.
     /// </summary>
     public class ExcelImportService
     {
@@ -17,162 +18,93 @@ namespace ExcelDashboardMVP.Services
         }
 
         /// <summary>
-        /// Imports person records from an Excel file
+        /// Imports person records from an Excel stream using header-name detection.
+        /// Falls back to column-position mapping if headers are not recognised.
         /// </summary>
-        /// <param name="stream">Stream containing the Excel file data</param>
-        /// <returns>List of PersonRecord objects</returns>
         public async Task<List<PersonRecord>> ImportFromExcelAsync(Stream stream)
         {
             var records = new List<PersonRecord>();
 
             try
             {
-                using (var package = new ExcelPackage(stream))
+                using var package = new ExcelPackage(stream);
+                var ws = package.Workbook.Worksheets[0];
+
+                if (ws.Dimension == null || ws.Dimension.Rows < 2)
                 {
-                    var worksheet = package.Workbook.Worksheets[0]; // Get first worksheet
-                    var rowCount = worksheet.Dimension?.Rows ?? 0;
+                    _logger.LogWarning("Excel file has no data rows.");
+                    return records;
+                }
 
-                    if (rowCount < 2)
+                // Build header → column-index map (case-insensitive)
+                var colMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (int c = 1; c <= ws.Dimension.Columns; c++)
+                {
+                    var h = ws.Cells[1, c].Value?.ToString()?.Trim() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(h) && !colMap.ContainsKey(h))
+                        colMap[h] = c;
+                }
+
+                int id = 1;
+                for (int row = 2; row <= ws.Dimension.Rows; row++)
+                {
+                    try
                     {
-                        _logger.LogWarning("Excel file is empty or has no data rows");
-                        return records;
+                        var name    = GetStr(ws, row, colMap, "Name");
+                        var surname = GetStr(ws, row, colMap, "Surname");
+                        if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(surname))
+                            continue;
+
+                        records.Add(new PersonRecord
+                        {
+                            RowNumber         = id++,
+                            Name              = name,
+                            Surname           = surname,
+                            Identifier        = GetStr(ws, row, colMap, "Identifier"),
+                            EmailAddress      = GetStr(ws, row, colMap, "EmailAddress", "Email Address", "Email"),
+                            LocalMunicipality = GetStr(ws, row, colMap, "LocalMunicipality", "Local Municipality", "Municipality"),
+                            HostCompany       = GetStr(ws, row, colMap, "HostCompany", "Host Company", "Host"),
+                            LeadCompany       = GetStr(ws, row, colMap, "LeadCompany", "Lead Company", "Lead"),
+                            JobType           = GetStr(ws, row, colMap, "JobType", "Job Type", "Job"),
+                            DemographicGroup  = GetStr(ws, row, colMap, "DemographicGroup", "Demographic Group", "Race", "Demographic"),
+                            Sex               = GetStr(ws, row, colMap, "Sex", "Gender"),
+                            ContactDetails    = GetStr(ws, row, colMap, "ContactDetails", "Contact Details", "Contact"),
+                            EmploymentStatus  = GetStr(ws, row, colMap, "EmploymentStatus", "Employment Status", "Status"),
+                            PersonDisability  = GetStr(ws, row, colMap, "PersonDisability", "Person Disability", "Disability")
+                        });
                     }
-
-                    // Start from row 2 (assuming row 1 is headers)
-                    for (int row = 2; row <= rowCount; row++)
+                    catch (Exception ex)
                     {
-                        try
-                        {
-                            var record = new PersonRecord
-                            {
-                                Number = GetIntValue(worksheet, row, 1),
-                                Surname = GetStringValue(worksheet, row, 2),
-                                Name = GetStringValue(worksheet, row, 3),
-                                Identifier = GetStringValue(worksheet, row, 4),
-                                Age = GetIntValue(worksheet, row, 5),
-                                Sex = GetStringValue(worksheet, row, 6),
-                                PersonWithDisability = GetBoolValue(worksheet, row, 7),
-                                DemographicGroup = GetStringValue(worksheet, row, 8),
-                                ContactDetails = GetStringValue(worksheet, row, 9),
-                                AlternativeContactDetails = GetStringValue(worksheet, row, 10),
-                                EmailAddress = GetStringValue(worksheet, row, 11),
-                                Address = GetStringValue(worksheet, row, 12),
-                                Suburb = GetStringValue(worksheet, row, 13),
-                                LocalMunicipality = GetStringValue(worksheet, row, 14),
-                                DistrictMunicipality = GetStringValue(worksheet, row, 15),
-                                EmploymentStatus = GetStringValue(worksheet, row, 16),
-                                StatusAtStartOfProgramme = GetStringValue(worksheet, row, 17),
-                                LeadCompany = GetStringValue(worksheet, row, 18),
-                                LeadCompanyAddress = GetStringValue(worksheet, row, 19),
-                                HostCompany = GetStringValue(worksheet, row, 20),
-                                JobType = GetStringValue(worksheet, row, 21),
-                                StartDate = GetDateValue(worksheet, row, 22),
-                                EndDate = GetDateValue(worksheet, row, 23),
-                                PeriodOfPlacement = GetIntValue(worksheet, row, 24),
-                                DocumentPath = GetStringValue(worksheet, row, 25)
-                            };
-
-                            records.Add(record);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, $"Error parsing row {row}");
-                            // Continue processing other rows
-                        }
+                        _logger.LogError(ex, "Error parsing row {Row}. Skipping.", row);
                     }
                 }
 
-                _logger.LogInformation($"Successfully imported {records.Count} records from Excel");
+                _logger.LogInformation("Imported {Count} records.", records.Count);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error importing Excel file");
+                _logger.LogError(ex, "Error reading Excel file.");
                 throw;
             }
 
             return records;
         }
 
-        /// <summary>
-        /// Imports person records from an Excel file path
-        /// </summary>
         public async Task<List<PersonRecord>> ImportFromExcelFileAsync(string filePath)
         {
-            using (var stream = File.OpenRead(filePath))
+            using var stream = File.OpenRead(filePath);
+            return await ImportFromExcelAsync(stream);
+        }
+
+        private static string GetStr(ExcelWorksheet ws, int row,
+            Dictionary<string, int> colMap, params string[] aliases)
+        {
+            foreach (var alias in aliases)
             {
-                return await ImportFromExcelAsync(stream);
+                if (colMap.TryGetValue(alias, out int col))
+                    return ws.Cells[row, col].Value?.ToString()?.Trim() ?? string.Empty;
             }
+            return string.Empty;
         }
-
-        #region Helper Methods
-
-        private string GetStringValue(ExcelWorksheet worksheet, int row, int col)
-        {
-            var value = worksheet.Cells[row, col].Value;
-            return value?.ToString()?.Trim() ?? string.Empty;
-        }
-
-        private int GetIntValue(ExcelWorksheet worksheet, int row, int col)
-        {
-            var value = worksheet.Cells[row, col].Value;
-            
-            if (value == null)
-                return 0;
-
-            if (int.TryParse(value.ToString(), out int result))
-                return result;
-
-            if (double.TryParse(value.ToString(), out double doubleResult))
-                return (int)doubleResult;
-
-            return 0;
-        }
-
-        private bool GetBoolValue(ExcelWorksheet worksheet, int row, int col)
-        {
-            var value = GetStringValue(worksheet, row, col).ToUpper();
-            
-            // Check for Y/N or Yes/No
-            if (value == "Y" || value == "YES" || value == "TRUE" || value == "1")
-                return true;
-
-            if (value == "N" || value == "NO" || value == "FALSE" || value == "0")
-                return false;
-
-            return false;
-        }
-
-        private DateTime? GetDateValue(ExcelWorksheet worksheet, int row, int col)
-        {
-            var value = worksheet.Cells[row, col].Value;
-
-            if (value == null)
-                return null;
-
-            // If it's already a DateTime
-            if (value is DateTime dateTime)
-                return dateTime;
-
-            // Try to parse string
-            if (DateTime.TryParse(value.ToString(), out DateTime result))
-                return result;
-
-            // Try to parse Excel serial date
-            if (double.TryParse(value.ToString(), out double serialDate))
-            {
-                try
-                {
-                    return DateTime.FromOADate(serialDate);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-
-            return null;
-        }
-
-        #endregion
     }
 }

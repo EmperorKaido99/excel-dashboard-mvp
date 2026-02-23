@@ -38,50 +38,50 @@
 @if (personRecords != null && personRecords.Any())
 {
     <h3>Imported Records (@personRecords.Count)</h3>
-    
+
     <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Number</th>
+                    <th>#</th>
                     <th>Name</th>
                     <th>Surname</th>
                     <th>Identifier</th>
-                    <th>Age</th>
                     <th>Sex</th>
                     <th>Contact</th>
                     <th>Email</th>
                     <th>Municipality</th>
-                    <th>Company</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
+                    <th>Host Company</th>
+                    <th>Job Type</th>
+                    <th>Emp. Status</th>
+                    <th>Disability</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var record in personRecords)
                 {
                     <tr>
-                        <td>@record.Number</td>
+                        <td>@record.RowNumber</td>
                         <td>@record.Name</td>
                         <td>@record.Surname</td>
                         <td>@record.Identifier</td>
-                        <td>@record.Age</td>
                         <td>@record.Sex</td>
                         <td>@record.ContactDetails</td>
                         <td>@record.EmailAddress</td>
                         <td>@record.LocalMunicipality</td>
                         <td>@record.HostCompany</td>
-                        <td>@(record.StartDate?.ToString("yyyy-MM-dd") ?? "N/A")</td>
-                        <td>@(record.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                        <td>@record.JobType</td>
+                        <td>@record.EmploymentStatus</td>
                         <td>
-                            @if (record.IsActivePlacement)
+                            @if (record.HasDisability)
                             {
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-warning text-dark">Yes</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Inactive</span>
+                                <span class="badge bg-secondary">
+                                    @(string.IsNullOrWhiteSpace(record.PersonDisability) ? "No" : record.PersonDisability)
+                                </span>
                             }
                         </td>
                     </tr>
@@ -99,21 +99,19 @@
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        errorMessage = string.Empty;
+        errorMessage   = string.Empty;
         successMessage = string.Empty;
-        isLoading = true;
+        isLoading      = true;
 
         try
         {
             var file = e.File;
-
             if (file == null)
             {
                 errorMessage = "No file selected";
                 return;
             }
 
-            // Validate file extension
             var extension = Path.GetExtension(file.Name).ToLowerInvariant();
             if (extension != ".xlsx" && extension != ".xls")
             {
@@ -121,23 +119,17 @@
                 return;
             }
 
-            // Read file into stream
-            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+            using var stream       = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
-            // Import data
             personRecords = await ExcelImportService.ImportFromExcelAsync(memoryStream);
 
             if (personRecords.Any())
-            {
                 successMessage = $"Successfully imported {personRecords.Count} records from {file.Name}";
-            }
             else
-            {
                 errorMessage = "No records found in the Excel file";
-            }
         }
         catch (Exception ex)
         {

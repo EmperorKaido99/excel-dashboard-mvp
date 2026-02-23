@@ -58,7 +58,9 @@
 
 @* ── TOOLBAR ─────────────────────────────────────────────────────────────── *@
 <MudPaper Elevation="3" Class="ma-4 pa-4">
-    <MudGrid Class="mb-3" AlignItems="AlignItems.Center">
+
+    @* FIX: MudGrid does not support AlignItems — removed *@
+    <MudGrid Class="mb-3">
         <MudItem xs="12" sm="5">
             <MudText Typo="Typo.h6">
                 <MudIcon Icon="@Icons.Material.Filled.TableChart" Class="mr-1" />
@@ -139,7 +141,7 @@
             </MudText>
 
             <MudGrid Spacing="2">
-                @* Text search filters *@
+                @* Text search filters — these use Value + ValueChanged (no @bind-Value clash) *@
                 @foreach (var fld in _textFilters)
                 {
                     <MudItem xs="12" sm="6" md="4">
@@ -156,12 +158,17 @@
                     </MudItem>
                 }
 
+                @* FIX: Use Value + ValueChanged ONLY (not @bind-Value + ValueChanged together).
+                         Mixing @bind-Value with ValueChanged generates duplicate parameter error RZ10010. *@
+
                 @* Dropdown: Sex *@
                 <MudItem xs="12" sm="6" md="4">
-                    <MudSelect @bind-Value="_filterSex" Label="Sex / Gender"
-                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                    <MudSelect Value="@_filterSex"
+                               Label="Sex / Gender"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
                                Clearable="true"
-                               ValueChanged="(string v) => { _filterSex = v; ApplyFilters(); }">
+                               ValueChanged="(string v) => OnSexFilterChanged(v)">
                         @foreach (var o in _sexOptions)
                         {
                             <MudSelectItem Value="@o">@o</MudSelectItem>
@@ -171,10 +178,12 @@
 
                 @* Dropdown: Employment Status *@
                 <MudItem xs="12" sm="6" md="4">
-                    <MudSelect @bind-Value="_filterStatus" Label="Employment Status"
-                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                    <MudSelect Value="@_filterStatus"
+                               Label="Employment Status"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
                                Clearable="true"
-                               ValueChanged="(string v) => { _filterStatus = v; ApplyFilters(); }">
+                               ValueChanged="(string v) => OnStatusFilterChanged(v)">
                         @foreach (var o in _statusOptions)
                         {
                             <MudSelectItem Value="@o">@o</MudSelectItem>
@@ -184,10 +193,12 @@
 
                 @* Dropdown: Disability *@
                 <MudItem xs="12" sm="6" md="4">
-                    <MudSelect @bind-Value="_filterDisability" Label="Person Disability"
-                               Variant="Variant.Outlined" Margin="Margin.Dense"
+                    <MudSelect Value="@_filterDisability"
+                               Label="Person Disability"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
                                Clearable="true"
-                               ValueChanged="(string v) => { _filterDisability = v; ApplyFilters(); }">
+                               ValueChanged="(string v) => OnDisabilityFilterChanged(v)">
                         <MudSelectItem Value="@("yes")">Has Disability</MudSelectItem>
                         <MudSelectItem Value="@("no")">No Disability</MudSelectItem>
                     </MudSelect>
@@ -239,19 +250,19 @@
                      @bind-RowsPerPage="_pageSize"
                      Style="overflow-x:auto;">
             <Columns>
-                <PropertyColumn Property="x => x.RowNumber"        Title="#"             Sortable="true" />
-                <PropertyColumn Property="x => x.Name"             Title="Name"          Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Surname"          Title="Surname"       Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Identifier"       Title="Identifier"    Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.EmailAddress"     Title="Email"         Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.HostCompany"      Title="Host Company"  Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.LeadCompany"      Title="Lead Company"  Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.JobType"          Title="Job Type"      Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.DemographicGroup" Title="Demographic"   Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Sex"              Title="Sex"           Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.ContactDetails"   Title="Contact"       Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.EmploymentStatus" Title="Emp. Status"   Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.RowNumber"         Title="#"             Sortable="true" />
+                <PropertyColumn Property="x => x.Name"              Title="Name"          Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Surname"           Title="Surname"       Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Identifier"        Title="Identifier"    Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.EmailAddress"      Title="Email"         Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.HostCompany"       Title="Host Company"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.LeadCompany"       Title="Lead Company"  Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.JobType"           Title="Job Type"      Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.DemographicGroup"  Title="Demographic"   Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Sex"               Title="Sex"           Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.ContactDetails"    Title="Contact"       Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.EmploymentStatus"  Title="Emp. Status"   Sortable="true" Filterable="true" />
                 <TemplateColumn Title="Disability" Sortable="false" Filterable="false">
                     <CellTemplate>
                         <MudChip T="string" Size="Size.Small"
@@ -391,16 +402,16 @@
 
     private List<TextFilter> _textFilters = new()
     {
-        new() { Label = "Name"              },
-        new() { Label = "Surname"           },
-        new() { Label = "Identifier"        },
-        new() { Label = "Email Address"     },
-        new() { Label = "Local Municipality"},
-        new() { Label = "Host Company"      },
-        new() { Label = "Lead Company"      },
-        new() { Label = "Job Type"          },
-        new() { Label = "Demographic Group" },
-        new() { Label = "Contact Details"   },
+        new() { Label = "Name"               },
+        new() { Label = "Surname"            },
+        new() { Label = "Identifier"         },
+        new() { Label = "Email Address"      },
+        new() { Label = "Local Municipality" },
+        new() { Label = "Host Company"       },
+        new() { Label = "Lead Company"       },
+        new() { Label = "Job Type"           },
+        new() { Label = "Demographic Group"  },
+        new() { Label = "Contact Details"    },
     };
 
     // ── Dropdown filters ─────────────────────────────────────────────────────
@@ -477,6 +488,11 @@
         ApplyFilters();
     }
 
+    // FIX: Separate named handlers avoid the need to combine @bind-Value with ValueChanged
+    private void OnSexFilterChanged(string v)        { _filterSex        = v ?? string.Empty; ApplyFilters(); }
+    private void OnStatusFilterChanged(string v)     { _filterStatus     = v ?? string.Empty; ApplyFilters(); }
+    private void OnDisabilityFilterChanged(string v) { _filterDisability = v ?? string.Empty; ApplyFilters(); }
+
     private void ApplyFilters()
     {
         var q = DataService.GetRecords().AsEnumerable();
@@ -486,14 +502,14 @@
         {
             var t = _globalSearch.Trim();
             q = q.Where(r =>
-                CI(r.Name, t)              || CI(r.Surname, t)       || CI(r.Identifier, t)  ||
-                CI(r.EmailAddress, t)      || CI(r.LocalMunicipality, t) || CI(r.HostCompany, t) ||
-                CI(r.LeadCompany, t)       || CI(r.JobType, t)       || CI(r.DemographicGroup, t) ||
-                CI(r.Sex, t)               || CI(r.ContactDetails, t) ||
+                CI(r.Name, t)              || CI(r.Surname, t)           || CI(r.Identifier, t)       ||
+                CI(r.EmailAddress, t)      || CI(r.LocalMunicipality, t) || CI(r.HostCompany, t)      ||
+                CI(r.LeadCompany, t)       || CI(r.JobType, t)           || CI(r.DemographicGroup, t) ||
+                CI(r.Sex, t)               || CI(r.ContactDetails, t)    ||
                 CI(r.EmploymentStatus, t)  || CI(r.PersonDisability, t));
         }
 
-        // Per-column text filters (label → property mapping)
+        // Per-column text filters
         foreach (var f in _textFilters.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
         {
             var term = f.Value.Trim();
@@ -509,11 +525,11 @@
                 "Job Type"           => q.Where(r => CI(r.JobType, term)),
                 "Demographic Group"  => q.Where(r => CI(r.DemographicGroup, term)),
                 "Contact Details"    => q.Where(r => CI(r.ContactDetails, term)),
-                _ => q
+                _                    => q
             };
         }
 
-        // Dropdown filters (exact match)
+        // Dropdown filters
         if (!string.IsNullOrWhiteSpace(_filterSex))
             q = q.Where(r => r.Sex.Equals(_filterSex, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(_filterStatus))
@@ -585,30 +601,30 @@
     private void OpenAddDialog()
     {
         _editingRecord = new PersonRecord();
-        _isNewRecord = true;
-        _showDialog = true;
+        _isNewRecord   = true;
+        _showDialog    = true;
     }
 
     private void OpenEditDialog(PersonRecord r)
     {
         _editingRecord = new PersonRecord
         {
-            RowNumber = r.RowNumber, Name = r.Name, Surname = r.Surname,
-            Identifier = r.Identifier, EmailAddress = r.EmailAddress,
-            LocalMunicipality = r.LocalMunicipality, HostCompany = r.HostCompany,
-            LeadCompany = r.LeadCompany, JobType = r.JobType,
-            DemographicGroup = r.DemographicGroup, Sex = r.Sex,
-            ContactDetails = r.ContactDetails, EmploymentStatus = r.EmploymentStatus,
-            PersonDisability = r.PersonDisability
+            RowNumber         = r.RowNumber,        Name              = r.Name,
+            Surname           = r.Surname,          Identifier        = r.Identifier,
+            EmailAddress      = r.EmailAddress,     LocalMunicipality = r.LocalMunicipality,
+            HostCompany       = r.HostCompany,      LeadCompany       = r.LeadCompany,
+            JobType           = r.JobType,          DemographicGroup  = r.DemographicGroup,
+            Sex               = r.Sex,              ContactDetails    = r.ContactDetails,
+            EmploymentStatus  = r.EmploymentStatus, PersonDisability  = r.PersonDisability
         };
         _isNewRecord = false;
-        _showDialog = true;
+        _showDialog  = true;
     }
 
     private void SaveRecord()
     {
         if (_editingRecord is null) return;
-        if (_isNewRecord) { DataService.AddRecord(_editingRecord); Snackbar.Add("Record added.", Severity.Success); }
+        if (_isNewRecord) { DataService.AddRecord(_editingRecord);   Snackbar.Add("Record added.",   Severity.Success); }
         else              { DataService.UpdateRecord(_editingRecord); Snackbar.Add("Record updated.", Severity.Success); }
         CloseDialog();
     }
@@ -632,9 +648,9 @@
     {
         try
         {
-            var records  = allData ? DataService.GetRecords() : _displayedRecords;
-            var bytes    = DataService.ExportToExcel(records);
-            var fileName = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+            var records   = allData ? DataService.GetRecords() : _displayedRecords;
+            var bytes     = DataService.ExportToExcel(records);
+            var fileName  = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
             var byteArray = bytes.Select(b => (int)b).ToArray();
             await JS.InvokeVoidAsync("downloadFileFromBytes", fileName,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", byteArray);

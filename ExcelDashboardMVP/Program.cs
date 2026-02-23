@@ -16,9 +16,11 @@ builder.Services.AddRazorComponents()
 builder.Services.AddMudServices();
 
 // ── ExcelDataService ──────────────────────────────────────────────────────
-// Singleton: one instance for the entire app lifetime so imported data
-// stays in memory and is reachable from every dashboard page.
 builder.Services.AddSingleton<ExcelDataService>();
+
+// ── ExcelImportService ────────────────────────────────────────────────────
+// Stateless — Scoped is fine.
+builder.Services.AddScoped<ExcelImportService>();
 
 var app = builder.Build();
 
