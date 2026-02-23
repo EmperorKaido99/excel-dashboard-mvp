@@ -183,16 +183,16 @@
                             Click a row to filter the participants table · Click chip to select job type
                         </MudText>
                     </CardHeaderContent>
-                    @if (HasFilter)
-                    {
-                        <CardHeaderActions>
+                    <CardHeaderActions>
+                        @if (HasFilter)
+                        {
                             <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
                                        StartIcon="@Icons.Material.Filled.FilterAltOff"
                                        OnClick="ClearFilter">
                                 Clear Filter
                             </MudButton>
-                        </CardHeaderActions>
-                    }
+                        }
+                    </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (!_records.Any())
@@ -216,13 +216,9 @@
                             }
                         </MudStack>
 
-                        @{
-                            var jobTypesToShow = string.IsNullOrWhiteSpace(_activeJobTypeFilter)
-                                ? _jobTypes.Take(5).ToList()
-                                : new List<string> { _activeJobTypeFilter };
-                        }
-
-                        @foreach (var jobType in jobTypesToShow)
+                        @foreach (var jobType in (string.IsNullOrWhiteSpace(_activeJobTypeFilter)
+                            ? _jobTypes.Take(5).ToList()
+                            : new List<string> { _activeJobTypeFilter }))
                         {
                             var group = _records
                                 .Where(r => r.JobType.Equals(jobType, StringComparison.OrdinalIgnoreCase))
