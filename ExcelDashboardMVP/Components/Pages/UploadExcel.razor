@@ -5,21 +5,28 @@
 @inject ExcelDataService ExcelDataService
 @inject ISnackbar Snackbar
 @inject ILogger<UploadExcel> Logger
+@inject Microsoft.JSInterop.IJSRuntime JS
 
 <PageTitle>Upload Excel</PageTitle>
 
-@* ── Upload card ─────────────────────────────────────────────────────────── *@
 <MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width:680px;">
-    <MudText Typo="Typo.h5" Color="Color.Primary">Upload Excel File</MudText>
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudText Typo="Typo.h5" Color="Color.Primary">Upload Excel File</MudText>
+        <MudButton StartIcon="@Icons.Material.Filled.Download"
+                   Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small"
+                   OnClick="DownloadTemplate">
+            Download Template
+        </MudButton>
+    </MudStack>
     <MudText Color="Color.Secondary" Class="mb-4">
         Select a <strong>.xlsx</strong> or <strong>.xls</strong> file to import participant records.
-        The data will be instantly available across all dashboard pages after upload.
+        Data is instantly available across all dashboard pages after upload.
     </MudText>
 
     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
-        Expected columns (any order): Name, Surname, Identifier, EmailAddress,
-        LocalMunicipality, HostCompany, LeadCompany, JobType, DemographicGroup,
-        Sex, ContactDetails, EmploymentStatus, PersonDisability
+        Expected columns (any order): Name · Surname · Identifier · EmailAddress ·
+        LocalMunicipality · HostCompany · LeadCompany · JobType · DemographicGroup ·
+        Sex · ContactDetails · EmploymentStatus · PersonDisability
     </MudText>
 
     <MudFileUpload T="IBrowserFile" FilesChanged="HandleFileChanged"
@@ -45,9 +52,20 @@
         <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" />
         <MudText Color="Color.Secondary" Class="mt-2">Parsing file…</MudText>
     }
+
+    @if (_validationErrors.Any())
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true" ShowCloseIcon="true"
+                  CloseIconClicked="() => _validationErrors.Clear()">
+            <strong>Missing required columns:</strong> @string.Join(", ", _validationErrors)
+            <br />
+            <MudText Typo="Typo.caption">
+                Download the template to see the expected column names.
+            </MudText>
+        </MudAlert>
+    }
 </MudPaper>
 
-@* ── Summary card ────────────────────────────────────────────────────────── *@
 @if (_importedCount > 0)
 {
     <MudPaper Elevation="2" Class="pa-6 ma-4" Style="max-width:680px;">
@@ -79,7 +97,6 @@
     </MudPaper>
 }
 
-@* ── Quick-preview table ─────────────────────────────────────────────────── *@
 @if (_previewRecords != null && _previewRecords.Any())
 {
     <MudPaper Elevation="2" Class="pa-4 ma-4">
@@ -93,6 +110,7 @@
                     <th>Municipality</th>
                     <th>Host Company</th>
                     <th>Job Type</th>
+                    <th>Demographic</th>
                     <th>Sex</th>
                     <th>Emp. Status</th>
                     <th>Disability</th>
@@ -108,6 +126,7 @@
                         <td>@rec.LocalMunicipality</td>
                         <td>@rec.HostCompany</td>
                         <td>@rec.JobType</td>
+                        <td>@rec.DemographicGroup</td>
                         <td>@rec.Sex</td>
                         <td>@rec.EmploymentStatus</td>
                         <td>
@@ -134,13 +153,15 @@
     private string? _selectedFileName;
     private int _importedCount;
     private List<PersonRecord>? _previewRecords;
+    private List<string> _validationErrors = new();
 
     private async Task HandleFileChanged(IBrowserFile? file)
     {
-        _selectedFileName = null;
-        _importedCount    = 0;
-        _previewRecords   = null;
-        _isLoading        = true;
+        _selectedFileName  = null;
+        _importedCount     = 0;
+        _previewRecords    = null;
+        _validationErrors.Clear();
+        _isLoading = true;
 
         try
         {
@@ -164,9 +185,18 @@
             await browserStream.CopyToAsync(ms);
             ms.Position = 0;
 
-            _importedCount = await ExcelDataService.ImportFromExcelAsync(ms);
+            var (count, missing) = await ExcelDataService.ImportFromExcelAsync(ms);
 
-            if (_importedCount == 0)
+            if (missing.Any())
+            {
+                _validationErrors = missing;
+                Snackbar.Add($"Import failed — missing columns: {string.Join(", ", missing)}", Severity.Error);
+                return;
+            }
+
+            _importedCount = count;
+
+            if (count == 0)
             {
                 Snackbar.Add("The file contained no data rows.", Severity.Warning);
                 return;
@@ -175,8 +205,7 @@
             _previewRecords = ExcelDataService.GetRecords().Take(10).ToList();
 
             Snackbar.Add(
-                $"Imported {_importedCount} record{(_importedCount == 1 ? "" : "s")} from {file.Name}. " +
-                "Navigate to Data Table to view all records.",
+                $"Imported {count} record{(count == 1 ? "" : "s")} from {file.Name}.",
                 Severity.Success,
                 cfg => { cfg.ShowCloseIcon = true; cfg.VisibleStateDuration = 6000; });
         }
@@ -188,6 +217,24 @@
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    private async Task DownloadTemplate()
+    {
+        try
+        {
+            var bytes     = ExcelDataService.GenerateTemplate();
+            var byteArray = bytes.Select(b => (int)b).ToArray();
+            await JS.InvokeVoidAsync("downloadFileFromBytes",
+                "ParticipantTemplate.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                byteArray);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Template download error");
+            Snackbar.Add("Failed to generate template.", Severity.Error);
         }
     }
 }

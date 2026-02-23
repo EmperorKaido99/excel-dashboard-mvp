@@ -7,23 +7,20 @@
 
 <PageTitle>Courses Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4"
-              Style="background-color:#0a1929; min-height:100vh;">
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
 
-    @* ── Header ──────────────────────────────────────────────────────────── *@
     <MudGrid Class="mb-4">
         <MudItem xs="12">
-            <MudText Typo="Typo.h4" Style="color:white;">Courses</MudText>
-            <MudText Typo="Typo.caption" Style="color:rgba(255,255,255,0.5);">
+            <MudText Typo="Typo.h4" Color="Color.Primary">Courses</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
                 @_records.Count participants · Skill Development Programme
             </MudText>
         </MudItem>
     </MudGrid>
 
-    @* ── Metrics ─────────────────────────────────────────────────────────── *@
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
@@ -37,7 +34,7 @@
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:white;">
+            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:white;">
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
@@ -51,7 +48,7 @@
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:white;">
+            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:white;">
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
@@ -65,7 +62,7 @@
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Style="background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);color:white;">
+            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);color:white;">
                 <MudCardContent>
                     <MudStack Spacing="2">
                         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
@@ -80,14 +77,10 @@
         </MudItem>
     </MudGrid>
 
-    @* ── Main Grid ────────────────────────────────────────────────────────── *@
     <MudGrid Spacing="3">
-
-        @* ── Left Column ─────────────────────────────────────────────────── *@
         <MudItem xs="12" md="7">
 
-            @* Courses (hardcoded) *@
-            <MudCard Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">Skill Development Programme — Courses</MudText>
@@ -98,20 +91,13 @@
                         @foreach (var course in _courses)
                         {
                             <MudItem xs="12" sm="6">
-                                <MudCard Outlined="true"
-                                         Style="background-color:#0f172a; border-color:rgba(255,255,255,0.1);">
+                                <MudCard Outlined="true">
                                     <MudCardContent>
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                            <MudIcon Icon="@course.Icon"
-                                                     Style="@($"color:{course.Color}")" />
+                                            <MudIcon Icon="@course.Icon" Style="@($"color:{course.Color}")" />
                                             <MudStack Spacing="0">
-                                                <MudText Typo="Typo.body2" Style="color:white;">
-                                                    @course.Name
-                                                </MudText>
-                                                <MudText Typo="Typo.caption"
-                                                         Style="color:rgba(255,255,255,0.5);">
-                                                    @course.Category
-                                                </MudText>
+                                                <MudText Typo="Typo.body2">@course.Name</MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@course.Category</MudText>
                                             </MudStack>
                                         </MudStack>
                                     </MudCardContent>
@@ -122,35 +108,27 @@
                 </MudCardContent>
             </MudCard>
 
-            @* By Job Type (from upload) *@
-            <MudCard Class="mt-3" Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">By Job Type</MudText>
-                    </CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">By Job Type</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.5);">
-                            Upload data to see breakdown.
-                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see breakdown.</MudText>
                     }
                     @foreach (var grp in _records
                         .GroupBy(r => r.JobType)
                         .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                         .OrderByDescending(g => g.Count()).Take(8))
                     {
-                        <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                  AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudText Typo="Typo.body2">@grp.Key</MudText>
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                 <MudProgressLinear
-                                    Value="@(_records.Count > 0
-                                        ? (double)grp.Count() / _records.Count * 100 : 0)"
+                                    Value="@(_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0)"
                                     Color="Color.Primary" Size="Size.Small" Style="width:100px;" />
-                                <MudText Typo="Typo.caption"
-                                         Style="color:rgba(255,255,255,0.7); min-width:30px;">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:30px;">
                                     @grp.Count()
                                 </MudText>
                             </MudStack>
@@ -159,39 +137,30 @@
                 </MudCardContent>
             </MudCard>
 
-            @* By Municipality ──────────────────────────────────────────────── *@
-            <MudCard Class="mt-3" Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">By Municipality</MudText>
-                    </CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">By Municipality</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.5);">
-                            Upload data to see breakdown.
-                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see breakdown.</MudText>
                     }
                     @foreach (var grp in _records
                         .GroupBy(r => r.LocalMunicipality)
                         .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                         .OrderByDescending(g => g.Count()).Take(8))
                     {
-                        <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                  AlignItems="AlignItems.Center" Class="mb-2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                             <MudText Typo="Typo.body2"
-                                     Style="min-width:120px; overflow:hidden;
-                                            text-overflow:ellipsis; white-space:nowrap;">
+                                     Style="min-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                 @grp.Key
                             </MudText>
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                 <MudProgressLinear
-                                    Value="@(_records.Count > 0
-                                        ? (double)grp.Count() / _records.Count * 100 : 0)"
+                                    Value="@(_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0)"
                                     Color="Color.Info" Size="Size.Small" Style="width:100px;" />
-                                <MudText Typo="Typo.caption"
-                                         Style="color:rgba(255,255,255,0.7); min-width:30px;">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:30px;">
                                     @grp.Count()
                                 </MudText>
                             </MudStack>
@@ -201,31 +170,21 @@
             </MudCard>
         </MudItem>
 
-        @* ── Right Column ─────────────────────────────────────────────────── *@
         <MudItem xs="12" md="5">
 
-            @* Top Instructors (hardcoded) *@
-            <MudCard Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2">
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Top Instructors</MudText>
-                    </CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Top Instructors</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @foreach (var inst in _instructors)
                     {
-                        <MudStack Row="true" AlignItems="AlignItems.Center"
-                                  Justify="Justify.SpaceBetween" Class="mb-3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                <MudAvatar Color="@inst.AvatarColor" Size="Size.Medium">
-                                    @inst.Initial
-                                </MudAvatar>
+                                <MudAvatar Color="@inst.AvatarColor" Size="Size.Medium">@inst.Initial</MudAvatar>
                                 <MudStack Spacing="0">
-                                    <MudText Typo="Typo.body2" Style="color:white;">@inst.Name</MudText>
-                                    <MudText Typo="Typo.caption"
-                                             Style="color:rgba(255,255,255,0.5);">
-                                        @inst.Speciality
-                                    </MudText>
+                                    <MudText Typo="Typo.body2">@inst.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@inst.Speciality</MudText>
                                 </MudStack>
                             </MudStack>
                             <MudChip T="string" Size="Size.Small" Color="Color.Success">Top</MudChip>
@@ -234,22 +193,16 @@
                 </MudCardContent>
             </MudCard>
 
-            @* Participants by Course/Job Type *@
-            <MudCard Class="mt-3" Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Participants by Course</MudText>
-                    </CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Participants by Course</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (!_records.Any())
                     {
                         <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                            <MudIcon Icon="@Icons.Material.Filled.School"
-                                     Style="font-size:4rem; opacity:0.2;" />
-                            <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.4);">
-                                Upload data to see course breakdown
-                            </MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.School" Style="font-size:4rem; opacity:0.2;" />
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see course breakdown</MudText>
                         </MudStack>
                     }
                     else
@@ -259,35 +212,26 @@
                             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                             .OrderByDescending(g => g.Count()).Take(7))
                         {
-                            <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                      AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                                 <MudText Typo="Typo.body2"
-                                         Style="color:white; min-width:120px; overflow:hidden;
-                                                text-overflow:ellipsis; white-space:nowrap;">
+                                         Style="min-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                     @grp.Key
                                 </MudText>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">
-                                    @grp.Count()
-                                </MudChip>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary">@grp.Count()</MudChip>
                             </MudStack>
                         }
                     }
                 </MudCardContent>
             </MudCard>
 
-            @* Demographic Breakdown *@
-            <MudCard Class="mt-3" Style="background-color:#1e293b; color:white;">
+            <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Demographic Group Breakdown</MudText>
-                    </CardHeaderContent>
+                    <CardHeaderContent><MudText Typo="Typo.h6">Demographic Group Breakdown</MudText></CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Style="color:rgba(255,255,255,0.5);">
-                            Upload data to see breakdown.
-                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see breakdown.</MudText>
                     }
                     else
                     {
@@ -296,19 +240,13 @@
                             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                             .OrderByDescending(g => g.Count()).Take(6))
                         {
-                            <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                      AlignItems="AlignItems.Center" Class="mb-2">
-                                <MudText Typo="Typo.body2" Style="color:white; min-width:100px;">
-                                    @grp.Key
-                                </MudText>
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                                <MudText Typo="Typo.body2" Style="min-width:100px;">@grp.Key</MudText>
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                     <MudProgressLinear
-                                        Value="@(_records.Count > 0
-                                            ? (double)grp.Count() / _records.Count * 100 : 0)"
+                                        Value="@(_records.Count > 0 ? (double)grp.Count() / _records.Count * 100 : 0)"
                                         Color="Color.Secondary" Size="Size.Small" Style="width:80px;" />
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">
-                                        @grp.Count()
-                                    </MudChip>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@grp.Count()</MudChip>
                                 </MudStack>
                             </MudStack>
                         }
@@ -318,35 +256,29 @@
         </MudItem>
     </MudGrid>
 
-    @* ── Employment Status Table ─────────────────────────────────────────── *@
-    <MudCard Class="mt-3" Style="background-color:#1e293b; color:white;">
+    <MudCard Elevation="2" Class="mt-3">
         <MudCardHeader>
             <CardHeaderContent>
                 <MudText Typo="Typo.h6">Participants by Employment Status</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent Class="pa-0">
-            <MudTable Items="@GetStatusBreakdown()" Hover="true" Dense="true"
-                      Style="background-color:transparent;">
+            <MudTable Items="@GetStatusBreakdown()" Hover="true" Dense="true">
                 <HeaderContent>
-                    <MudTh Style="color:rgba(255,255,255,0.7);">Employment Status</MudTh>
-                    <MudTh Style="color:rgba(255,255,255,0.7);">Count</MudTh>
-                    <MudTh Style="color:rgba(255,255,255,0.7);">Share</MudTh>
+                    <MudTh>Employment Status</MudTh>
+                    <MudTh>Count</MudTh>
+                    <MudTh>Share</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Status" Style="color:white;">
-                        @(string.IsNullOrWhiteSpace(context.Key) ? "Unknown" : context.Key)
-                    </MudTd>
-                    <MudTd DataLabel="Count" Style="color:white;">@context.Count</MudTd>
+                    <MudTd DataLabel="Status">@(string.IsNullOrWhiteSpace(context.Key) ? "Unknown" : context.Key)</MudTd>
+                    <MudTd DataLabel="Count">@context.Count</MudTd>
                     <MudTd DataLabel="Share">
                         <MudProgressLinear Value="@context.Pct" Color="Color.Primary"
                                            Size="Size.Small" Style="width:120px;" />
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <MudText Align="Align.Center" Style="color:rgba(255,255,255,0.5);" Class="pa-4">
-                        Upload data to see breakdown.
-                    </MudText>
+                    <MudText Align="Align.Center" Color="Color.Secondary" Class="pa-4">Upload data to see breakdown.</MudText>
                 </NoRecordsContent>
             </MudTable>
         </MudCardContent>
@@ -358,7 +290,6 @@
     private int _municipalityCount;
     private int _leadCompanyCount;
 
-    // ── Hardcoded data ──────────────────────────────────────────────────────
     private record CourseItem(string Name, string Category, string Icon, string Color);
     private record InstructorItem(string Name, string Speciality, string Initial, Color AvatarColor);
 
@@ -379,7 +310,6 @@
         new("Chulumanco Mbete",  "Platform Admin",             "C", Color.Secondary),
     };
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         ExcelDataService.OnDataChanged += Reload;
@@ -391,12 +321,8 @@
     private void LoadData()
     {
         _records           = ExcelDataService.GetRecords();
-        _municipalityCount = _records.Select(r => r.LocalMunicipality)
-                                     .Where(s => !string.IsNullOrWhiteSpace(s))
-                                     .Distinct().Count();
-        _leadCompanyCount  = _records.Select(r => r.LeadCompany)
-                                     .Where(s => !string.IsNullOrWhiteSpace(s))
-                                     .Distinct().Count();
+        _municipalityCount = _records.Select(r => r.LocalMunicipality).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
+        _leadCompanyCount  = _records.Select(r => r.LeadCompany).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
     }
 
     private record StatusRow(string Key, int Count, double Pct);

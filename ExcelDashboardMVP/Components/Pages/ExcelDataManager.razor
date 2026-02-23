@@ -14,10 +14,17 @@
 
 @* ── UPLOAD ZONE ──────────────────────────────────────────────────────────── *@
 <MudPaper Elevation="3" Class="ma-4 pa-6">
-    <MudText Typo="Typo.h5" Color="Color.Primary">
-        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Class="mr-2" />
-        Excel Upload
-    </MudText>
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h5" Color="Color.Primary">
+            <MudIcon Icon="@Icons.Material.Filled.UploadFile" Class="mr-2" />
+            Excel Upload
+        </MudText>
+        <MudButton StartIcon="@Icons.Material.Filled.Download"
+                   Variant="Variant.Outlined" Color="Color.Secondary"
+                   Size="Size.Small" OnClick="DownloadTemplate">
+            Download Template
+        </MudButton>
+    </MudStack>
 
     <div class="@(_isDragging ? "upload-zone upload-zone--active" : "upload-zone")"
          @ondragenter="OnDragEnter" @ondragleave="OnDragLeave"
@@ -40,6 +47,12 @@
             </ActivatorContent>
         </MudFileUpload>
 
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Expected columns (any order): Name · Surname · Identifier · EmailAddress ·
+            LocalMunicipality · HostCompany · LeadCompany · JobType ·
+            DemographicGroup · Sex · ContactDetails · EmploymentStatus · PersonDisability
+        </MudText>
+
         @if (_isLoading)
         {
             <MudProgressLinear Color="Color.Primary" Indeterminate="true"
@@ -54,12 +67,25 @@
             </MudChip>
         }
     </div>
+
+    @* Validation errors *@
+    @if (_validationErrors.Any())
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" Dense="true" ShowCloseIcon="true"
+                  CloseIconClicked="() => _validationErrors.Clear()">
+            <strong>Import failed — missing required columns:</strong>
+            @string.Join(", ", _validationErrors)
+            <br />
+            <MudText Typo="Typo.caption">
+                Download the template above to see the correct column names.
+            </MudText>
+        </MudAlert>
+    }
 </MudPaper>
 
 @* ── TOOLBAR ─────────────────────────────────────────────────────────────── *@
 <MudPaper Elevation="3" Class="ma-4 pa-4">
 
-    @* FIX: MudGrid does not support AlignItems — removed *@
     <MudGrid Class="mb-3">
         <MudItem xs="12" sm="5">
             <MudText Typo="Typo.h6">
@@ -87,7 +113,7 @@
                               AdornmentIcon="@Icons.Material.Filled.Search"
                               Variant="Variant.Outlined" Margin="Margin.Dense"
                               Style="min-width:180px;" Immediate="true"
-                              DebounceInterval="250"
+                              DebounceInterval="200"
                               OnDebounceIntervalElapsed="ApplyFilters" />
 
                 <MudButton StartIcon="@Icons.Material.Filled.FilterAlt"
@@ -141,7 +167,7 @@
             </MudText>
 
             <MudGrid Spacing="2">
-                @* Text search filters — these use Value + ValueChanged (no @bind-Value clash) *@
+                @* Text filters *@
                 @foreach (var fld in _textFilters)
                 {
                     <MudItem xs="12" sm="6" md="4">
@@ -158,10 +184,7 @@
                     </MudItem>
                 }
 
-                @* FIX: Use Value + ValueChanged ONLY (not @bind-Value + ValueChanged together).
-                         Mixing @bind-Value with ValueChanged generates duplicate parameter error RZ10010. *@
-
-                @* Dropdown: Sex *@
+                @* Dropdown: Sex — Value + ValueChanged only (never mix with @bind-Value) *@
                 <MudItem xs="12" sm="6" md="4">
                     <MudSelect Value="@_filterSex"
                                Label="Sex / Gender"
@@ -185,6 +208,36 @@
                                Clearable="true"
                                ValueChanged="(string v) => OnStatusFilterChanged(v)">
                         @foreach (var o in _statusOptions)
+                        {
+                            <MudSelectItem Value="@o">@o</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                @* Dropdown: Demographic Group *@
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect Value="@_filterDemographic"
+                               Label="Demographic Group"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true"
+                               ValueChanged="(string v) => OnDemographicFilterChanged(v)">
+                        @foreach (var o in _demographicOptions)
+                        {
+                            <MudSelectItem Value="@o">@o</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                @* Dropdown: Job Type *@
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect Value="@_filterJobType"
+                               Label="Job Type"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true"
+                               ValueChanged="(string v) => OnJobTypeFilterChanged(v)">
+                        @foreach (var o in _jobTypeOptions)
                         {
                             <MudSelectItem Value="@o">@o</MudSelectItem>
                         }
@@ -223,7 +276,7 @@
                      Style="font-size:5rem;opacity:0.2;" />
             <MudText Typo="Typo.h6" Color="Color.Secondary">No data loaded yet</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Upload an Excel file above to get started.
+                Upload an Excel file above to get started, or download the template to see the expected format.
             </MudText>
         </MudStack>
     }
@@ -246,24 +299,24 @@
         <MudDataGrid T="PersonRecord"
                      Items="@_displayedRecords"
                      Dense="true" Hover="true" Striped="true" Bordered="true"
-                     Filterable="true" FilterMode="DataGridFilterMode.ColumnFilterRow"
+                     Filterable="false"
                      @bind-RowsPerPage="_pageSize"
                      Style="overflow-x:auto;">
             <Columns>
                 <PropertyColumn Property="x => x.RowNumber"         Title="#"             Sortable="true" />
-                <PropertyColumn Property="x => x.Name"              Title="Name"          Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Surname"           Title="Surname"       Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Identifier"        Title="Identifier"    Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.EmailAddress"      Title="Email"         Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality"  Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.HostCompany"       Title="Host Company"  Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.LeadCompany"       Title="Lead Company"  Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.JobType"           Title="Job Type"      Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.DemographicGroup"  Title="Demographic"   Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Sex"               Title="Sex"           Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.ContactDetails"    Title="Contact"       Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.EmploymentStatus"  Title="Emp. Status"   Sortable="true" Filterable="true" />
-                <TemplateColumn Title="Disability" Sortable="false" Filterable="false">
+                <PropertyColumn Property="x => x.Name"              Title="Name"          Sortable="true" />
+                <PropertyColumn Property="x => x.Surname"           Title="Surname"       Sortable="true" />
+                <PropertyColumn Property="x => x.Identifier"        Title="Identifier"    Sortable="true" />
+                <PropertyColumn Property="x => x.EmailAddress"      Title="Email"         Sortable="true" />
+                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality"  Sortable="true" />
+                <PropertyColumn Property="x => x.HostCompany"       Title="Host Company"  Sortable="true" />
+                <PropertyColumn Property="x => x.LeadCompany"       Title="Lead Company"  Sortable="true" />
+                <PropertyColumn Property="x => x.JobType"           Title="Job Type"      Sortable="true" />
+                <PropertyColumn Property="x => x.DemographicGroup"  Title="Demographic"   Sortable="true" />
+                <PropertyColumn Property="x => x.Sex"               Title="Sex"           Sortable="true" />
+                <PropertyColumn Property="x => x.ContactDetails"    Title="Contact"       Sortable="true" />
+                <PropertyColumn Property="x => x.EmploymentStatus"  Title="Emp. Status"   Sortable="true" />
+                <TemplateColumn Title="Disability" Sortable="false">
                     <CellTemplate>
                         <MudChip T="string" Size="Size.Small"
                                  Color="@(context.Item.HasDisability ? Color.Warning : Color.Default)">
@@ -273,7 +326,7 @@
                         </MudChip>
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                <TemplateColumn Title="Actions" Sortable="false">
                     <CellTemplate>
                         <MudStack Row="true" Spacing="0">
                             <MudIconButton Icon="@Icons.Material.Filled.Edit"
@@ -288,7 +341,7 @@
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="PersonRecord"
-                                  PageSizeOptions="@(new[] {10, 25, 50, 100})" />
+                                  PageSizeOptions="@(new[] {10, 25, 50, 100, 500})" />
             </PagerContent>
         </MudDataGrid>
     }
@@ -388,11 +441,12 @@
     private bool _isDragging;
     private string? _selectedFileName;
     private int _importedCount;
+    private List<string> _validationErrors = new();
 
     // ── Grid ─────────────────────────────────────────────────────────────────
     private string _globalSearch = string.Empty;
     private List<PersonRecord> _displayedRecords = new();
-    private int _totalCount => DataService.GetRecordCount();
+    private int _totalCount   => DataService.GetRecordCount();
     private int _filteredCount => _displayedRecords.Count;
     private int _pageSize = 25;
     private bool _showFilters;
@@ -409,25 +463,29 @@
         new() { Label = "Local Municipality" },
         new() { Label = "Host Company"       },
         new() { Label = "Lead Company"       },
-        new() { Label = "Job Type"           },
-        new() { Label = "Demographic Group"  },
         new() { Label = "Contact Details"    },
     };
 
     // ── Dropdown filters ─────────────────────────────────────────────────────
-    private string _filterSex        = string.Empty;
-    private string _filterStatus     = string.Empty;
-    private string _filterDisability = string.Empty;
+    private string _filterSex         = string.Empty;
+    private string _filterStatus      = string.Empty;
+    private string _filterDemographic = string.Empty;
+    private string _filterJobType     = string.Empty;
+    private string _filterDisability  = string.Empty;
 
-    private List<string> _sexOptions    = new();
-    private List<string> _statusOptions = new();
+    private List<string> _sexOptions         = new();
+    private List<string> _statusOptions      = new();
+    private List<string> _demographicOptions = new();
+    private List<string> _jobTypeOptions     = new();
 
     // ── Filter helpers ────────────────────────────────────────────────────────
     private bool HasActiveFilters =>
         !string.IsNullOrWhiteSpace(_globalSearch) ||
         _textFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value)) ||
-        !string.IsNullOrWhiteSpace(_filterSex) ||
-        !string.IsNullOrWhiteSpace(_filterStatus) ||
+        !string.IsNullOrWhiteSpace(_filterSex)         ||
+        !string.IsNullOrWhiteSpace(_filterStatus)      ||
+        !string.IsNullOrWhiteSpace(_filterDemographic) ||
+        !string.IsNullOrWhiteSpace(_filterJobType)     ||
         !string.IsNullOrWhiteSpace(_filterDisability);
 
     private int ActiveFilterCount
@@ -436,9 +494,11 @@
         {
             int c = string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1;
             c += _textFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
-            if (!string.IsNullOrWhiteSpace(_filterSex))        c++;
-            if (!string.IsNullOrWhiteSpace(_filterStatus))     c++;
-            if (!string.IsNullOrWhiteSpace(_filterDisability)) c++;
+            if (!string.IsNullOrWhiteSpace(_filterSex))         c++;
+            if (!string.IsNullOrWhiteSpace(_filterStatus))      c++;
+            if (!string.IsNullOrWhiteSpace(_filterDemographic)) c++;
+            if (!string.IsNullOrWhiteSpace(_filterJobType))     c++;
+            if (!string.IsNullOrWhiteSpace(_filterDisability))  c++;
             return c;
         }
     }
@@ -466,12 +526,10 @@
     private void BuildDropdowns()
     {
         var all = DataService.GetRecords();
-        _sexOptions    = all.Select(r => r.Sex)
-                            .Where(s => !string.IsNullOrWhiteSpace(s))
-                            .Distinct().OrderBy(x => x).ToList();
-        _statusOptions = all.Select(r => r.EmploymentStatus)
-                            .Where(s => !string.IsNullOrWhiteSpace(s))
-                            .Distinct().OrderBy(x => x).ToList();
+        _sexOptions         = all.Select(r => r.Sex).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
+        _statusOptions      = all.Select(r => r.EmploymentStatus).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
+        _demographicOptions = all.Select(r => r.DemographicGroup).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
+        _jobTypeOptions     = all.Select(r => r.JobType).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
     }
 
     private void ToggleFilters() => _showFilters = !_showFilters;
@@ -488,28 +546,27 @@
         ApplyFilters();
     }
 
-    // FIX: Separate named handlers avoid the need to combine @bind-Value with ValueChanged
-    private void OnSexFilterChanged(string v)        { _filterSex        = v ?? string.Empty; ApplyFilters(); }
-    private void OnStatusFilterChanged(string v)     { _filterStatus     = v ?? string.Empty; ApplyFilters(); }
-    private void OnDisabilityFilterChanged(string v) { _filterDisability = v ?? string.Empty; ApplyFilters(); }
+    private void OnSexFilterChanged(string v)         { _filterSex         = v ?? string.Empty; ApplyFilters(); }
+    private void OnStatusFilterChanged(string v)      { _filterStatus      = v ?? string.Empty; ApplyFilters(); }
+    private void OnDemographicFilterChanged(string v) { _filterDemographic = v ?? string.Empty; ApplyFilters(); }
+    private void OnJobTypeFilterChanged(string v)     { _filterJobType     = v ?? string.Empty; ApplyFilters(); }
+    private void OnDisabilityFilterChanged(string v)  { _filterDisability  = v ?? string.Empty; ApplyFilters(); }
 
     private void ApplyFilters()
     {
         var q = DataService.GetRecords().AsEnumerable();
 
-        // Global search across all text fields
         if (!string.IsNullOrWhiteSpace(_globalSearch))
         {
             var t = _globalSearch.Trim();
             q = q.Where(r =>
-                CI(r.Name, t)              || CI(r.Surname, t)           || CI(r.Identifier, t)       ||
-                CI(r.EmailAddress, t)      || CI(r.LocalMunicipality, t) || CI(r.HostCompany, t)      ||
-                CI(r.LeadCompany, t)       || CI(r.JobType, t)           || CI(r.DemographicGroup, t) ||
+                CI(r.Name, t)              || CI(r.Surname, t)           || CI(r.Identifier, t)      ||
+                CI(r.EmailAddress, t)      || CI(r.LocalMunicipality, t) || CI(r.HostCompany, t)     ||
+                CI(r.LeadCompany, t)       || CI(r.JobType, t)           || CI(r.DemographicGroup, t)||
                 CI(r.Sex, t)               || CI(r.ContactDetails, t)    ||
                 CI(r.EmploymentStatus, t)  || CI(r.PersonDisability, t));
         }
 
-        // Per-column text filters
         foreach (var f in _textFilters.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
         {
             var term = f.Value.Trim();
@@ -522,18 +579,19 @@
                 "Local Municipality" => q.Where(r => CI(r.LocalMunicipality, term)),
                 "Host Company"       => q.Where(r => CI(r.HostCompany, term)),
                 "Lead Company"       => q.Where(r => CI(r.LeadCompany, term)),
-                "Job Type"           => q.Where(r => CI(r.JobType, term)),
-                "Demographic Group"  => q.Where(r => CI(r.DemographicGroup, term)),
                 "Contact Details"    => q.Where(r => CI(r.ContactDetails, term)),
                 _                    => q
             };
         }
 
-        // Dropdown filters
         if (!string.IsNullOrWhiteSpace(_filterSex))
             q = q.Where(r => r.Sex.Equals(_filterSex, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(_filterStatus))
             q = q.Where(r => r.EmploymentStatus.Equals(_filterStatus, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(_filterDemographic))
+            q = q.Where(r => r.DemographicGroup.Equals(_filterDemographic, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(_filterJobType))
+            q = q.Where(r => r.JobType.Equals(_filterJobType, StringComparison.OrdinalIgnoreCase));
         if (!string.IsNullOrWhiteSpace(_filterDisability))
         {
             bool wantDisabled = _filterDisability == "yes";
@@ -550,7 +608,7 @@
     {
         _globalSearch = string.Empty;
         foreach (var f in _textFilters) f.Value = string.Empty;
-        _filterSex = _filterStatus = _filterDisability = string.Empty;
+        _filterSex = _filterStatus = _filterDemographic = _filterJobType = _filterDisability = string.Empty;
         ApplyFilters();
     }
 
@@ -568,7 +626,10 @@
         if (file is null) return;
         _selectedFileName = null;
         _importedCount = 0;
+        _validationErrors.Clear();
         _isLoading = true;
+        StateHasChanged();
+
         try
         {
             var ext = Path.GetExtension(file.Name).ToLowerInvariant();
@@ -577,24 +638,57 @@
                 Snackbar.Add("Only .xlsx and .xls files are supported.", Severity.Error);
                 return;
             }
-            _selectedFileName = file.Name;
+
             using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             ms.Position = 0;
-            _importedCount = await DataService.ImportFromExcelAsync(ms);
-            if (_importedCount == 0)
-                Snackbar.Add("No data rows found in the file.", Severity.Warning);
+
+            var (count, missing) = await DataService.ImportFromExcelAsync(ms);
+
+            if (missing.Any())
+            {
+                _validationErrors = missing;
+                Snackbar.Add($"Import failed: missing columns — {string.Join(", ", missing)}", Severity.Error);
+                return;
+            }
+
+            _selectedFileName = file.Name;
+            _importedCount = count;
+
+            if (count == 0)
+                Snackbar.Add("No data rows found in the file. Check the file has data below the header row.", Severity.Warning);
             else
-                Snackbar.Add($"Imported {_importedCount} records from {file.Name}", Severity.Success);
+                Snackbar.Add($"✓ Imported {count} records from {file.Name}", Severity.Success);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Upload error");
             Snackbar.Add($"Import failed: {ex.Message}", Severity.Error);
-            _selectedFileName = null;
         }
-        finally { _isLoading = false; }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // ── Template Download ─────────────────────────────────────────────────────
+    private async Task DownloadTemplate()
+    {
+        try
+        {
+            var bytes     = DataService.GenerateTemplate();
+            var byteArray = bytes.Select(b => (int)b).ToArray();
+            await JS.InvokeVoidAsync("downloadFileFromBytes",
+                "ParticipantTemplate.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                byteArray);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Template download error");
+            Snackbar.Add("Failed to generate template.", Severity.Error);
+        }
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────────
