@@ -300,6 +300,9 @@
                      Items="@_displayedRecords"
                      Dense="true" Hover="true" Striped="true" Bordered="true"
                      Filterable="false"
+                     Virtualize="true"
+                     Height="600px"
+                     FixedHeader="true"
                      @bind-RowsPerPage="_pageSize"
                      Style="overflow-x:auto;">
             <Columns>
