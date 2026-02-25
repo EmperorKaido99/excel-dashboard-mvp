@@ -26,62 +26,72 @@
         </MudItem>
     </MudGrid>
 
-    @* ── Metrics ─────────────────────────────────────────────────────────── *@
+    @* ── Metric Cards — white style matching Projects page ───────────────── *@
     <MudGrid Spacing="3" Class="mb-4">
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudStack Spacing="1">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Total Participants</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total Participants</MudText>
+                            <MudText Typo="Typo.h4">@DisplayedRecords.Count</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary"
+                                     Icon="@Icons.Material.Filled.People">
+                                @(HasFilter ? $"of {_records.Count} total" : "In system")
+                            </MudChip>
                         </MudStack>
-                        <MudText Typo="Typo.h4">@DisplayedRecords.Count</MudText>
-                        <MudText Typo="Typo.caption">@(HasFilter ? $"of {_records.Count} total" : "In system")</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Size="Size.Large" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:white;">
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudStack Spacing="1">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Host Companies</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Host Companies</MudText>
+                            <MudText Typo="Typo.h4">@_hostCompanyCount</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info"
+                                     Icon="@Icons.Material.Filled.Business">
+                                Unique companies
+                            </MudChip>
                         </MudStack>
-                        <MudText Typo="Typo.h4">@_hostCompanyCount</MudText>
-                        <MudText Typo="Typo.caption">Unique companies</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Info" Size="Size.Large" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);color:white;">
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudStack Spacing="1">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">Job Types</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.Work" Size="Size.Small" />
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Job Types</MudText>
+                            <MudText Typo="Typo.h4">@_jobTypeCount</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success"
+                                     Icon="@Icons.Material.Filled.Work">
+                                Unique categories
+                            </MudChip>
                         </MudStack>
-                        <MudText Typo="Typo.h4">@_jobTypeCount</MudText>
-                        <MudText Typo="Typo.caption">Unique categories</MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.Work" Color="Color.Success" Size="Size.Large" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="2" Style="background:linear-gradient(135deg,#fa709a 0%,#fee140 100%);color:white;">
+            <MudCard Elevation="2">
                 <MudCardContent>
-                    <MudStack Spacing="1">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start">
-                            <MudText Typo="Typo.body2">With Disability</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.Accessibility" Size="Size.Small" />
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">With Disability</MudText>
+                            <MudText Typo="Typo.h4">@_withDisability</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning"
+                                     Icon="@Icons.Material.Filled.Accessibility">
+                                @(Math.Round(_records.Count > 0 ? (double)_withDisability / _records.Count * 100 : 0, 1))% of total
+                            </MudChip>
                         </MudStack>
-                        <MudText Typo="Typo.h4">@_withDisability</MudText>
-                        <MudText Typo="Typo.caption">
-                            @(Math.Round(_records.Count > 0 ? (double)_withDisability / _records.Count * 100 : 0, 1))% of total
-                        </MudText>
+                        <MudIcon Icon="@Icons.Material.Filled.Accessibility" Color="Color.Warning" Size="Size.Large" />
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -93,7 +103,6 @@
         @* ── Left Column ──────────────────────────────────────────────────── *@
         <MudItem xs="12" md="6">
 
-            @* Placement by Host Company *@
             <MudCard Elevation="2">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -103,9 +112,7 @@
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Upload data to see placement breakdown.
-                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see placement breakdown.</MudText>
                     }
                     @foreach (var grp in _records
                         .GroupBy(r => r.HostCompany)
@@ -120,8 +127,7 @@
                             </MudText>
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                 <MudProgressLinear Value="@pct" Color="Color.Primary" Size="Size.Small" Style="width:100px;" />
-                                <MudText Typo="Typo.caption" Color="Color.Secondary"
-                                         Style="min-width:24px; text-align:right;">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="min-width:24px; text-align:right;">
                                     @grp.Count()
                                 </MudText>
                             </MudStack>
@@ -138,7 +144,6 @@
                 </MudCardContent>
             </MudCard>
 
-            @* Top Companies table *@
             <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
                     <CardHeaderContent><MudText Typo="Typo.h6">Top Companies</MudText></CardHeaderContent>
@@ -171,7 +176,6 @@
                 </MudCardContent>
             </MudCard>
 
-            @* ── Demographic Group Breakdown ─────────────────────────────── *@
             <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
                     <CardHeaderContent>
@@ -197,13 +201,10 @@
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Upload data to see demographic breakdown.
-                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see demographic breakdown.</MudText>
                     }
                     else
                     {
-                        @* Job-type chip selector *@
                         <MudStack Row="true" Style="flex-wrap:wrap; gap:4px;" Class="mb-4">
                             @foreach (var jt in _jobTypes)
                             {
@@ -232,21 +233,14 @@
                                 .ToList();
 
                             <MudPaper Outlined="true" Class="pa-3 mb-3" Style="border-radius:8px;">
-                                <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                          AlignItems="AlignItems.Center" Class="mb-2">
-                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                                        <strong>@jobType</strong>
-                                    </MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @total participants total
-                                    </MudText>
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary"><strong>@jobType</strong></MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@total participants total</MudText>
                                 </MudStack>
-
                                 @foreach (var demo in demoBreakdown)
                                 {
-                                    var pct    = Math.Round((double)demo.Count() / total * 100, 1);
+                                    var pct = Math.Round((double)demo.Count() / total * 100, 1);
                                     var isSelected = _activeJobTypeFilter == jobType && _activeDemoFilter == demo.Key;
-
                                     <div @onclick="() => OnDemographicClick(jobType, demo.Key)"
                                          style="cursor:pointer; border-radius:4px; padding:2px 4px;
                                                 background:@(isSelected ? "rgba(16,116,214,0.08)" : "transparent")">
@@ -350,7 +344,7 @@
                 </MudCardContent>
             </MudCard>
 
-            @* Gender Ratio *@
+            @* Gender Ratio — donut chart style matching reference image *@
             <MudCard Elevation="2" Class="mt-3">
                 <MudCardHeader>
                     <CardHeaderContent><MudText Typo="Typo.h6">Gender Ratio</MudText></CardHeaderContent>
@@ -358,43 +352,53 @@
                 <MudCardContent>
                     @if (!_records.Any())
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Upload data to see gender breakdown.
-                        </MudText>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="py-4">
+                            <MudIcon Icon="@Icons.Material.Filled.DonutLarge" Style="font-size:4rem; opacity:0.2;" />
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Upload data to see gender breakdown.</MudText>
+                        </MudStack>
                     }
                     else
                     {
-                        <MudGrid Spacing="2" Class="mb-3">
+                        @* Donut chart *@
+                        <MudStack AlignItems="AlignItems.Center">
+                            <MudChart ChartType="ChartType.Donut"
+                                      Width="220px" Height="220px"
+                                      InputData="@_genderDistribution"
+                                      InputLabels="@_genderLabels">
+                                <CustomGraphics>
+                                    <text x="50%" y="45%" text-anchor="middle"
+                                          font-size="1.1rem" fill="#1e293b" font-weight="bold">
+                                        Total
+                                    </text>
+                                    <text x="50%" y="57%" text-anchor="middle"
+                                          font-size="1.3rem" fill="#1e293b" font-weight="bold">
+                                        @_records.Count
+                                    </text>
+                                </CustomGraphics>
+                            </MudChart>
+                        </MudStack>
+
+                        @* Male / Female count row *@
+                        <MudGrid Spacing="0" Class="mt-3">
                             <MudItem xs="6">
-                                <MudStack Spacing="1" Class="text-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.Man" Size="Size.Large"
-                                             Style="color:#1976d2; font-size:2.5rem;" />
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Male</MudText>
-                                    <MudText Typo="Typo.h4" Color="Color.Info">@_maleCount</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@MalePct%</MudText>
+                                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Male Candidates</MudText>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudText Typo="Typo.h5" Style="color:#00bcd4; font-weight:700;">@_maleCount</MudText>
+                                        <MudText Typo="Typo.caption" Style="color:#4caf50;">▲ @MalePct%</MudText>
+                                    </MudStack>
                                 </MudStack>
                             </MudItem>
                             <MudItem xs="6">
-                                <MudStack Spacing="1" Class="text-center">
-                                    <MudIcon Icon="@Icons.Material.Filled.Woman" Size="Size.Large"
-                                             Style="color:#9c27b0; font-size:2.5rem;" />
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Female</MudText>
-                                    <MudText Typo="Typo.h4" Color="Color.Secondary">@_femaleCount</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@FemalePct%</MudText>
+                                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Female Candidates</MudText>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudText Typo="Typo.h5" Style="color:#9c27b0; font-weight:700;">@_femaleCount</MudText>
+                                        <MudText Typo="Typo.caption" Style="color:#f44336;">▼ @FemalePct%</MudText>
+                                    </MudStack>
                                 </MudStack>
                             </MudItem>
                         </MudGrid>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">Male</MudText>
-                        <MudProgressLinear Value="@MalePct" Color="Color.Info"
-                                           Size="Size.Medium" Class="mb-3" Rounded="true" />
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">Female</MudText>
-                        <MudProgressLinear Value="@FemalePct" Color="Color.Secondary"
-                                           Size="Size.Medium" Class="mb-1" Rounded="true" />
-                        @if (_otherCount > 0)
-                        {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 mb-1">Other / Unspecified</MudText>
-                            <MudProgressLinear Value="@OtherPct" Color="Color.Default" Size="Size.Medium" Rounded="true" />
-                        }
                     }
                 </MudCardContent>
             </MudCard>
@@ -421,8 +425,7 @@
                             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                             .OrderByDescending(g => g.Count()).Take(5))
                         {
-                            <MudStack Row="true" Justify="Justify.SpaceBetween"
-                                      AlignItems="AlignItems.Center" Class="mb-2">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
                                 <MudText Typo="Typo.body2">@grp.Key</MudText>
                                 <MudChip T="string" Size="Size.Small" Color="Color.Default">@grp.Count()</MudChip>
                             </MudStack>
@@ -441,7 +444,9 @@
                     All Participants
                     @if (HasFilter)
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-2">Filtered: @DisplayedRecords.Count of @_records.Count</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-2">
+                            Filtered: @DisplayedRecords.Count of @_records.Count
+                        </MudChip>
                     }
                 </MudText>
             </CardHeaderContent>
@@ -449,8 +454,7 @@
                 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                     @if (HasFilter)
                     {
-                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
-                                   OnClick="ClearFilter">Clear</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="ClearFilter">Clear</MudButton>
                     }
                     <MudTextField @bind-Value="_searchString"
                                   Placeholder="Search"
@@ -483,8 +487,7 @@
                     </MudTd>
                     <MudTd>
                         <MudChip T="string" Size="Size.Small"
-                                 Color="@(context.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase)
-                                    ? Color.Secondary : Color.Info)">
+                                 Color="@(context.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase) ? Color.Secondary : Color.Info)">
                             @(string.IsNullOrWhiteSpace(context.Sex) ? "N/A" : context.Sex)
                         </MudChip>
                     </MudTd>
@@ -495,7 +498,7 @@
                 </RowTemplate>
                 <NoRecordsContent>
                     <MudText Align="Align.Center" Color="Color.Secondary" Class="pa-4">
-                        No data — upload an Excel file via Data Table.
+                        No data — upload an Excel file via the Uploads page.
                     </MudText>
                 </NoRecordsContent>
             </MudTable>
@@ -522,6 +525,10 @@
     private double[] _statusDistribution = Array.Empty<double>();
     private string[] _statusLabels       = Array.Empty<string>();
 
+    // Gender donut data
+    private double[] _genderDistribution = Array.Empty<double>();
+    private string[] _genderLabels       = Array.Empty<string>();
+
     private double MalePct   => _records.Count > 0 ? Math.Round((double)_maleCount   / _records.Count * 100, 1) : 0;
     private double FemalePct => _records.Count > 0 ? Math.Round((double)_femaleCount / _records.Count * 100, 1) : 0;
     private double OtherPct  => _records.Count > 0 ? Math.Round((double)_otherCount  / _records.Count * 100, 1) : 0;
@@ -542,15 +549,10 @@
         }
     }
 
-    // ── Hardcoded data ──────────────────────────────────────────────────────
-    private readonly List<string> _placements = new()
-        { "UWC", "Old Mutual", "CC", "FM", "BYC", "CallLab", "KPMG" };
+    private readonly List<string> _placements = new() { "UWC", "Old Mutual", "CC", "FM", "BYC", "CallLab", "KPMG" };
+    private readonly List<string> _jobTitles  = new() { "Tech Support", "Cloud Admin", "Data Analyst" };
 
-    private readonly List<string> _jobTitles = new()
-        { "Tech Support", "Cloud Admin", "Data Analyst" };
-
-    private record CompanyInfo(string CompanyName, string Industry,
-        string Subscription, Color SubColor, string RecruiterSince);
+    private record CompanyInfo(string CompanyName, string Industry, string Subscription, Color SubColor, string RecruiterSince);
 
     private readonly List<CompanyInfo> _topCompanies = new()
     {
@@ -561,7 +563,6 @@
         new("Excellerate CPT", "Sponsor",            "Partner", Color.Primary, "2023"),
     };
 
-    // Stable colour palette per demographic group
     private static readonly Color[] DemoPalette =
     {
         Color.Primary, Color.Secondary, Color.Info, Color.Success,
@@ -572,7 +573,6 @@
     private Color GetDemoColor(string key) =>
         _demoColorMap.TryGetValue(key, out var c) ? c : Color.Default;
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         ExcelDataService.OnDataChanged += Reload;
@@ -583,13 +583,13 @@
 
     private void LoadData()
     {
-        _records          = ExcelDataService.GetRecords();
-        _hostCompanyCount = _records.Select(r => r.HostCompany).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
-        _jobTypeCount     = _records.Select(r => r.JobType).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
-        _maleCount        = _records.Count(r => r.Sex.Equals("Male",   StringComparison.OrdinalIgnoreCase));
-        _femaleCount      = _records.Count(r => r.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase));
-        _otherCount       = _records.Count - _maleCount - _femaleCount;
-        _withDisability   = _records.Count(r => r.HasDisability);
+        _records           = ExcelDataService.GetRecords();
+        _hostCompanyCount  = _records.Select(r => r.HostCompany).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
+        _jobTypeCount      = _records.Select(r => r.JobType).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().Count();
+        _maleCount         = _records.Count(r => r.Sex.Equals("Male",   StringComparison.OrdinalIgnoreCase));
+        _femaleCount       = _records.Count(r => r.Sex.Equals("Female", StringComparison.OrdinalIgnoreCase));
+        _otherCount        = _records.Count - _maleCount - _femaleCount;
+        _withDisability    = _records.Count(r => r.HasDisability);
         _withoutDisability = _records.Count - _withDisability;
 
         _jobTypes = _records
@@ -599,7 +599,6 @@
             .Select(g => g.Key)
             .ToList();
 
-        // Build stable colour map for demographic groups
         _demoColorMap.Clear();
         var demoGroups = _records
             .Select(r => string.IsNullOrWhiteSpace(r.DemographicGroup) ? "Unspecified" : r.DemographicGroup)
@@ -607,15 +606,23 @@
         for (int i = 0; i < demoGroups.Count; i++)
             _demoColorMap[demoGroups[i]] = DemoPalette[i % DemoPalette.Length];
 
+        // Employment status donut
         var statusGroups = _records
             .GroupBy(r => r.EmploymentStatus)
             .Where(g => !string.IsNullOrWhiteSpace(g.Key))
             .OrderByDescending(g => g.Count()).Take(6).ToList();
         _statusDistribution = statusGroups.Select(g => (double)g.Count()).ToArray();
         _statusLabels       = statusGroups.Select(g => g.Key).ToArray();
+
+        // Gender donut — cyan for male, purple for female
+        var genderList = new List<(string Label, double Count)>();
+        if (_maleCount > 0)   genderList.Add(("Male",   _maleCount));
+        if (_femaleCount > 0) genderList.Add(("Female", _femaleCount));
+        if (_otherCount > 0)  genderList.Add(("Other",  _otherCount));
+        _genderDistribution = genderList.Select(x => x.Count).ToArray();
+        _genderLabels       = genderList.Select(x => x.Label).ToArray();
     }
 
-    // ── Demographic interaction ─────────────────────────────────────────────
     private void OnJobTypeChipClick(string jt)
     {
         _activeJobTypeFilter = _activeJobTypeFilter == jt ? string.Empty : jt;
