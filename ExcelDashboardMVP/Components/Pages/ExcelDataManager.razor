@@ -3,6 +3,9 @@
 @using ExcelDashboardMVP.Models
 @using ExcelDashboardMVP.Services
 @using Microsoft.JSInterop
+@using OfficeOpenXml
+@using OfficeOpenXml.Style
+@using System.Drawing
 @inject ExcelDataService DataService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -12,322 +15,372 @@
 
 <PageTitle>Data Table</PageTitle>
 
-<MudPaper Elevation="3" Class="ma-4 pa-4">
+<style>
+    .xp { display:flex; flex-direction:column; height:calc(100vh - 58px); overflow:hidden; padding:8px; box-sizing:border-box; }
+    .xtb { flex-shrink:0; background:white; border:1px solid #d0d8f0; border-bottom:none; border-radius:8px 8px 0 0; padding:8px 12px; }
+    .xbody { flex:1; overflow:auto; border:1px solid #d0d8f0; background:white; }
+    .xfoot { flex-shrink:0; background:#f8f9ff; border:1px solid #d0d8f0; border-top:2px solid #c0caed; border-radius:0 0 8px 8px; padding:4px 12px; }
+    .xt { border-collapse:collapse; width:100%; font-size:13px; table-layout:auto; }
+    .xt th { position:sticky; top:0; background:#eef2ff; border:1px solid #c4cfff; padding:5px 8px; font-size:12px; font-weight:600; white-space:nowrap; user-select:none; z-index:10; cursor:pointer; }
+    .xt th:hover { background:#d8e2ff; }
+    .xt th.nc { cursor:default; }
+    .xt .frow th { top:29px; background:#fffbf2; padding:2px 3px; cursor:default; border-top:2px solid #e8d080; }
+    .xt td { border:1px solid #e4e8f8; padding:3px 7px; white-space:nowrap; max-width:200px; overflow:hidden; text-overflow:ellipsis; cursor:cell; font-size:13px; height:26px; }
+    .xt tr:nth-child(even) td { background:#f9faff; }
+    .xt tr:hover td { background:#edf3ff !important; }
+    .xt tr.xsel td { background:#d4e6ff !important; }
+    .xt td.xedit { padding:0 !important; overflow:visible; }
+    .xt td.xedit input { width:100%; min-width:100px; border:2px solid #1074d6; outline:none; padding:3px 6px; font-size:13px; font-family:inherit; background:white; box-sizing:border-box; display:block; height:26px; }
+    .xt .xrn { background:#f0f0f4 !important; color:#888; text-align:center; width:38px; min-width:38px; cursor:default; font-size:11px; position:sticky; left:0; z-index:5; }
+    .xt th.xrn { z-index:11; }
+    .xt .xac { width:56px; min-width:56px; cursor:default; text-align:center; }
+    .xt .xaddcol { cursor:pointer; border-left:2px dashed #90a8ff !important; color:#1074d6; text-align:center; width:34px; min-width:34px; }
+    .xt .xaddcol:hover { background:#dde8ff !important; }
+    .xfi { width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:3px; padding:2px 4px; font-size:11px; font-family:inherit; background:white; }
+    .xfi:focus { border-color:#1074d6; outline:none; background:#fff8e8; }
+    .xsi { color:#1074d6; margin-left:3px; font-size:10px; }
+    .xchip { display:inline-block; border-radius:12px; padding:1px 8px; font-size:11px; font-weight:500; }
+    .xchip-y { background:#fff3cd; color:#856404; }
+    .xchip-f { background:#f3e8ff; color:#7c3aed; }
+    .xchip-m { background:#e0f2fe; color:#0369a1; }
+</style>
 
-    @* ── TOOLBAR ─────────────────────────────────────────────────────────── *@
-    <MudGrid Class="mb-3">
-        <MudItem xs="12" sm="5">
-            <MudText Typo="Typo.h6">
-                <MudIcon Icon="@Icons.Material.Filled.TableChart" Class="mr-1" />
-                Participant Data
-            </MudText>
+<div class="xp">
+
+    @* ══════ TOOLBAR ══════ *@
+    <div class="xtb">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="flex-wrap:wrap; gap:5px;">
+            <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="Color.Primary" Size="Size.Small"/>
+            <MudText Typo="Typo.subtitle1" Style="font-weight:700; color:#1e2393; margin-right:6px;">Data Table</MudText>
             <MudText Typo="Typo.caption" Color="Color.Secondary">
-                Showing <strong>@_filteredCount</strong> of <strong>@_totalCount</strong> records
-                @if (HasActiveFilters)
+                @_filtered.Count / @_allRecords.Count rows &nbsp;·&nbsp; @VisibleColumns.Count cols
+                @if (HasFilters)
                 {
-                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-2">
-                        @ActiveFilterCount filter(s) active
-                    </MudChip>
+                    <span style="color:#ed6c02; font-weight:600;"> · @ActiveFilterCount filter(s) active</span>
                 }
             </MudText>
-        </MudItem>
 
-        <MudItem xs="12" sm="7">
-            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Style="flex-wrap:wrap;">
+            <MudTextField @bind-Value="_globalSearch"
+                          Placeholder="Search all columns..."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Style="width:200px;" Immediate="true" DebounceInterval="250"
+                          OnDebounceIntervalElapsed="ApplyFilters"/>
 
-                <MudTextField @bind-Value="_globalSearch"
-                              Placeholder="Search all columns…"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Search"
-                              Variant="Variant.Outlined" Margin="Margin.Dense"
-                              Style="min-width:180px;" Immediate="true"
-                              DebounceInterval="200"
-                              OnDebounceIntervalElapsed="ApplyFilters" />
+            <div style="flex:1; min-width:4px;"/>
 
-                <MudButton StartIcon="@Icons.Material.Filled.FilterAlt"
-                           Variant="@(_showFilters ? Variant.Filled : Variant.Outlined)"
-                           Color="@(HasActiveFilters ? Color.Warning : Color.Primary)"
-                           OnClick="ToggleFilters" Size="Size.Small">
-                    Filters @(HasActiveFilters ? $"({ActiveFilterCount})" : "")
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddRowDialog">
+                Add Row
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="OpenAddColumnDialog">
+                + Column
+            </MudButton>
+
+            <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
+
+            <MudButton Variant="@(_showFilters ? Variant.Filled : Variant.Outlined)"
+                       Color="@(HasFilters ? Color.Warning : Color.Default)"
+                       Size="Size.Small" StartIcon="@Icons.Material.Filled.FilterAlt"
+                       OnClick="() => _showFilters = !_showFilters">
+                Filters
+            </MudButton>
+            @if (HasFilters)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="ClearAllFilters">
+                    Clear
                 </MudButton>
+            }
 
-                @if (HasActiveFilters)
-                {
-                    <MudButton StartIcon="@Icons.Material.Filled.FilterAltOff"
-                               Variant="Variant.Outlined" Color="Color.Error"
-                               OnClick="ClearAllFilters" Size="Size.Small">
-                        Clear
-                    </MudButton>
-                }
+            <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
 
-                <MudButton StartIcon="@Icons.Material.Filled.Add"
-                           Variant="Variant.Filled" Color="Color.Primary"
-                           Size="Size.Small" OnClick="OpenAddDialog">
-                    Add
-                </MudButton>
-
-                <MudButton StartIcon="@Icons.Material.Filled.FileDownload"
-                           Variant="Variant.Outlined" Color="Color.Success"
-                           Size="Size.Small" OnClick="() => ExportData(false)"
-                           Disabled="@(_filteredCount == 0)">
-                    Export Filtered
-                </MudButton>
-
-                <MudButton StartIcon="@Icons.Material.Filled.Download"
-                           Variant="Variant.Outlined" Color="Color.Success"
-                           Size="Size.Small" OnClick="() => ExportData(true)"
-                           Disabled="@(_totalCount == 0)">
-                    Export All
-                </MudButton>
-
-                <MudButton StartIcon="@Icons.Material.Filled.Download"
-                           Variant="Variant.Outlined" Color="Color.Secondary"
-                           Size="Size.Small" OnClick="DownloadTemplate">
-                    Template
-                </MudButton>
-            </MudStack>
-        </MudItem>
-    </MudGrid>
-
-    @* ── FILTER PANEL ────────────────────────────────────────────────────── *@
-    @if (_showFilters)
-    {
-        <MudPaper Outlined="true" Class="pa-4 mb-3" Style="background:#f8f9ff; border-radius:8px;">
-            <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.FilterAlt" Size="Size.Small" Class="mr-1" />
-                Column Filters — combine any number simultaneously
-            </MudText>
-
-            <MudGrid Spacing="2">
-                @foreach (var fld in _textFilters)
-                {
-                    <MudItem xs="12" sm="6" md="4">
-                        <MudTextField Value="@fld.Value"
-                                      Label="@fld.Label"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Immediate="true"
-                                      DebounceInterval="200"
-                                      ValueChanged="(string v) => OnTextFilterChanged(fld, v)"
-                                      Adornment="@(!string.IsNullOrWhiteSpace(fld.Value) ? Adornment.End : Adornment.None)"
-                                      AdornmentIcon="@Icons.Material.Filled.Close"
-                                      OnAdornmentClick="() => ClearTextField(fld)" />
-                    </MudItem>
-                }
-
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSelect Value="@_filterSex" Label="Sex / Gender"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
-                               ValueChanged="(string v) => OnSexFilterChanged(v)">
-                        @foreach (var o in _sexOptions)
-                        { <MudSelectItem Value="@o">@o</MudSelectItem> }
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSelect Value="@_filterStatus" Label="Employment Status"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
-                               ValueChanged="(string v) => OnStatusFilterChanged(v)">
-                        @foreach (var o in _statusOptions)
-                        { <MudSelectItem Value="@o">@o</MudSelectItem> }
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSelect Value="@_filterDemographic" Label="Demographic Group"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
-                               ValueChanged="(string v) => OnDemographicFilterChanged(v)">
-                        @foreach (var o in _demographicOptions)
-                        { <MudSelectItem Value="@o">@o</MudSelectItem> }
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSelect Value="@_filterJobType" Label="Job Type"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
-                               ValueChanged="(string v) => OnJobTypeFilterChanged(v)">
-                        @foreach (var o in _jobTypeOptions)
-                        { <MudSelectItem Value="@o">@o</MudSelectItem> }
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" sm="6" md="4">
-                    <MudSelect Value="@_filterDisability" Label="Person Disability"
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true"
-                               ValueChanged="(string v) => OnDisabilityFilterChanged(v)">
-                        <MudSelectItem Value="@("yes")">Has Disability</MudSelectItem>
-                        <MudSelectItem Value="@("no")">No Disability</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-            </MudGrid>
-
-            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
-                <MudButton Variant="Variant.Outlined" Color="Color.Error"
-                           StartIcon="@Icons.Material.Filled.RestartAlt"
-                           OnClick="ClearAllFilters">
-                    Reset All Filters
-                </MudButton>
-            </MudStack>
-        </MudPaper>
-    }
-
-    @* ── DATA GRID ───────────────────────────────────────────────────────── *@
-    @if (_totalCount == 0)
-    {
-        <MudStack AlignItems="AlignItems.Center" Class="py-12">
-            <MudIcon Icon="@Icons.Material.Filled.TableView" Style="font-size:5rem;opacity:0.2;" />
-            <MudText Typo="Typo.h6" Color="Color.Secondary">No data loaded yet</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Go to the <strong>Uploads</strong> page to import an Excel file.
-            </MudText>
-            <MudStack Row="true" Spacing="2" Class="mt-2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           Href="/upload" StartIcon="@Icons.Material.Filled.Upload">
-                    Upload Data
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                           OnClick="DownloadTemplate"
-                           StartIcon="@Icons.Material.Filled.Download">
-                    Download Template
-                </MudButton>
-            </MudStack>
-        </MudStack>
-    }
-    else if (_filteredCount == 0)
-    {
-        <MudStack AlignItems="AlignItems.Center" Class="py-8">
-            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Style="font-size:4rem;opacity:0.3;" />
-            <MudText Typo="Typo.h6" Color="Color.Secondary">No records match the current filters</MudText>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ClearAllFilters">
-                Clear Filters
+            <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.FileDownload"
+                       OnClick="@(() => ExportData(false))"
+                       Disabled="@(_filtered.Count == 0)">
+                Export (@_filtered.Count)
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       OnClick="@(() => ExportData(true))"
+                       Disabled="@(_allRecords.Count == 0)">
+                All (@_allRecords.Count)
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Description"
+                       OnClick="DownloadTemplate">
+                Template
             </MudButton>
         </MudStack>
-    }
-    else
-    {
-        <MudDataGrid T="PersonRecord"
-                     Items="@_displayedRecords"
-                     Dense="true" Hover="true" Striped="true" Bordered="true"
-                     Filterable="false"
-                     @bind-RowsPerPage="_pageSize"
-                     Style="overflow-x:auto;">
-            <Columns>
-                <PropertyColumn Property="x => x.RowNumber"         Title="#"            Sortable="true" />
-                <PropertyColumn Property="x => x.Name"              Title="Name"         Sortable="true" />
-                <PropertyColumn Property="x => x.Surname"           Title="Surname"      Sortable="true" />
-                <PropertyColumn Property="x => x.Identifier"        Title="Identifier"   Sortable="true" />
-                <PropertyColumn Property="x => x.EmailAddress"      Title="Email"        Sortable="true" />
-                <PropertyColumn Property="x => x.LocalMunicipality" Title="Municipality" Sortable="true" />
-                <PropertyColumn Property="x => x.HostCompany"       Title="Host Company" Sortable="true" />
-                <PropertyColumn Property="x => x.LeadCompany"       Title="Lead Company" Sortable="true" />
-                <PropertyColumn Property="x => x.JobType"           Title="Job Type"     Sortable="true" />
-                <PropertyColumn Property="x => x.DemographicGroup"  Title="Demographic"  Sortable="true" />
-                <PropertyColumn Property="x => x.Sex"               Title="Sex"          Sortable="true" />
-                <PropertyColumn Property="x => x.ContactDetails"    Title="Contact"      Sortable="true" />
-                <PropertyColumn Property="x => x.EmploymentStatus"  Title="Emp. Status"  Sortable="true" />
-                <TemplateColumn Title="Disability" Sortable="false">
-                    <CellTemplate>
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@(context.Item.HasDisability ? Color.Warning : Color.Default)">
-                            @(context.Item.HasDisability ? "Yes"
-                              : string.IsNullOrWhiteSpace(context.Item.PersonDisability) ? "—"
-                              : context.Item.PersonDisability)
-                        </MudChip>
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="Actions" Sortable="false">
-                    <CellTemplate>
-                        <MudStack Row="true" Spacing="0">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Size="Size.Small" Color="Color.Primary"
-                                           OnClick="() => OpenEditDialog(context.Item)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Size="Size.Small" Color="Color.Error"
-                                           OnClick="() => ConfirmDelete(context.Item)" />
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="PersonRecord" PageSizeOptions="@(new[] {10, 25, 50, 100, 500})" />
-            </PagerContent>
-        </MudDataGrid>
-    }
-</MudPaper>
+    </div>
 
-@* ── ADD / EDIT DIALOG ────────────────────────────────────────────────────── *@
-@if (_showDialog && _editingRecord != null)
+    @* ══════ TABLE ══════ *@
+    <div class="xbody">
+        @if (_allRecords.Count == 0)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="py-16">
+                <MudIcon Icon="@Icons.Material.Filled.TableView" Style="font-size:5rem; opacity:0.15;"/>
+                <MudText Typo="Typo.h6" Color="Color.Secondary">No data loaded</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Go to <strong>Uploads</strong> to import an Excel file.</MudText>
+                <MudStack Row="true" Spacing="2" Class="mt-2">
+                    <MudButton Href="/upload" Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Upload">Upload Data</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                               OnClick="DownloadTemplate" StartIcon="@Icons.Material.Filled.Download">Template</MudButton>
+                </MudStack>
+            </MudStack>
+        }
+        else
+        {
+            <table class="xt">
+                <thead>
+                    <tr>
+                        <th class="xrn nc">#</th>
+                        @foreach (var col in VisibleColumns)
+                        {
+                            var c = col;
+                            <th @onclick="() => ToggleSort(c.Key)" title="Click to sort">
+                                @c.Label
+                                @if (_sortCol == c.Key)
+                                { <span class="xsi">@(_sortAsc ? "▲" : "▼")</span> }
+                            </th>
+                        }
+                        <th class="xac nc" style="border-left:2px solid #c4cfff;">Actions</th>
+                        <th class="xaddcol nc" @onclick="OpenAddColumnDialog" title="Add custom column">＋</th>
+                    </tr>
+                    @if (_showFilters)
+                    {
+                        <tr class="frow">
+                            <th class="xrn nc"></th>
+                            @foreach (var col in VisibleColumns)
+                            {
+                                var c = col;
+                                <th>
+                                    <input class="xfi" placeholder="filter..."
+                                           value="@GetFilter(c.Key)"
+                                           @oninput="e => OnFilterChanged(c.Key, e.Value?.ToString() ?? string.Empty)"/>
+                                </th>
+                            }
+                            <th></th><th></th>
+                        </tr>
+                    }
+                </thead>
+                <tbody>
+                    @foreach (var row in PagedData)
+                    {
+                        var r = row;
+                        <tr class="@(_selectedRow == r.RowNumber ? "xsel" : "")">
+                            <td class="xrn" @onclick="() => _selectedRow = r.RowNumber">@r.RowNumber</td>
+                            @foreach (var col in VisibleColumns)
+                            {
+                                var c = col;
+                                bool isEdit = _editRow == r.RowNumber && _editCol == c.Key;
+                                <td class="@(isEdit ? "xedit" : "")"
+                                    @onclick="() => BeginEdit(r.RowNumber, c.Key, GetCellValue(r, c.Key))">
+                                    @if (isEdit)
+                                    {
+                                        <input value="@_editValue"
+                                               @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty"
+                                               @onblur="CommitEdit"
+                                               @onkeydown="HandleEditKey"
+                                               @ref="_editInputRef"/>
+                                    }
+                                    else
+                                    {
+                                        @GetDisplayValue(r, c.Key)
+                                    }
+                                </td>
+                            }
+                            <td class="xac">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Size="Size.Small" Color="Color.Primary"
+                                               OnClick="() => OpenEditRowDialog(r)"
+                                               Style="padding:2px;"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                               Size="Size.Small" Color="Color.Error"
+                                               OnClick="() => ConfirmDelete(r)"
+                                               Style="padding:2px;"/>
+                            </td>
+                            <td></td>
+                        </tr>
+                    }
+                    @if (PagedData.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="@(VisibleColumns.Count + 3)"
+                                style="text-align:center; padding:32px; color:#999; font-style:italic;">
+                                No records match the current filters. &nbsp;
+                                <a href="javascript:void(0)" style="color:#1074d6;" @onclick="ClearAllFilters">Clear filters</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    @* ══════ PAGINATION ══════ *@
+    @if (_allRecords.Count > 0)
+    {
+        <div class="xfoot">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @if (_filtered.Count > 0)
+                    {
+                        <span>Rows @(_page * _pageSize + 1)–@(Math.Min((_page + 1) * _pageSize, _filtered.Count)) of @_filtered.Count</span>
+                    }
+                    @if (HasFilters) { <span> (of @_allRecords.Count total)</span> }
+                </MudText>
+                <div style="flex:1;"/>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Rows per page:</MudText>
+                <MudSelect @bind-Value="_pageSize" T="int" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           Style="width:76px;" ValueChanged="OnPageSizeChanged">
+                    <MudSelectItem Value="10">10</MudSelectItem>
+                    <MudSelectItem Value="25">25</MudSelectItem>
+                    <MudSelectItem Value="50">50</MudSelectItem>
+                    <MudSelectItem Value="100">100</MudSelectItem>
+                    <MudSelectItem Value="500">500</MudSelectItem>
+                </MudSelect>
+                <MudIconButton Icon="@Icons.Material.Filled.FirstPage"
+                               Size="Size.Small" Disabled="@(_page == 0)"
+                               OnClick="() => _page = 0"/>
+                <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore"
+                               Size="Size.Small" Disabled="@(_page == 0)"
+                               OnClick="() => { if (_page > 0) _page--; }"/>
+                <MudText Typo="Typo.caption" Style="min-width:72px; text-align:center;">
+                    @(_page + 1) / @TotalPages
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.NavigateNext"
+                               Size="Size.Small" Disabled="@(_page >= TotalPages - 1)"
+                               OnClick="() => { if (_page < TotalPages - 1) _page++; }"/>
+                <MudIconButton Icon="@Icons.Material.Filled.LastPage"
+                               Size="Size.Small" Disabled="@(_page >= TotalPages - 1)"
+                               OnClick="() => _page = TotalPages - 1"/>
+            </MudStack>
+        </div>
+    }
+</div>
+
+@* ══════ ADD / EDIT ROW DIALOG ══════ *@
+@if (_showRowDialog && _dialogRecord != null)
 {
     <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
-        <MudPaper Class="pa-6 dialog-panel" Elevation="8">
-            <MudText Typo="Typo.h6" Class="mb-4">
-                @(_isNewRecord ? "Add New Record" : "Edit Record")
-            </MudText>
+        <MudPaper Class="pa-6" Elevation="12"
+                  Style="width:92vw; max-width:880px; max-height:92vh; overflow-y:auto; border-radius:12px;">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@(_isNewRecord ? Icons.Material.Filled.PersonAdd : Icons.Material.Filled.Edit)"
+                             Size="Size.Small" Class="mr-1"/>
+                    @(_isNewRecord ? "Add New Row" : $"Edit Row #{_dialogRecord.RowNumber}")
+                </MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CloseRowDialog"/>
+            </MudStack>
+
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.Name" Label="Name"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                    <MudTextField @bind-Value="_dialogRecord.Name" Label="Name *"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.Surname" Label="Surname"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" />
+                    <MudTextField @bind-Value="_dialogRecord.Surname" Label="Surname *"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.Identifier" Label="Identifier"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.Identifier" Label="Identifier (ID Number)"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.EmailAddress" Label="Email Address"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Email" />
+                    <MudTextField @bind-Value="_dialogRecord.EmailAddress" Label="Email Address"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Email"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.LocalMunicipality" Label="Local Municipality"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.LocalMunicipality" Label="Local Municipality"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.HostCompany" Label="Host Company"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.HostCompany" Label="Host Company"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.LeadCompany" Label="Lead Company"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.LeadCompany" Label="Lead Company"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.JobType" Label="Job Type"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.JobType" Label="Job Type"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.DemographicGroup" Label="Demographic Group"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.DemographicGroup" Label="Demographic Group"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudSelect @bind-Value="_editingRecord.Sex" Label="Sex / Gender"
+                    <MudSelect @bind-Value="_dialogRecord.Sex" Label="Sex / Gender"
                                Variant="Variant.Outlined" Margin="Margin.Dense">
                         <MudSelectItem Value="@("Male")">Male</MudSelectItem>
                         <MudSelectItem Value="@("Female")">Female</MudSelectItem>
                         <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                        <MudSelectItem Value="@("")">— Not specified —</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.ContactDetails" Label="Contact Details"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.ContactDetails" Label="Contact Details"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_editingRecord.EmploymentStatus" Label="Employment Status"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    <MudTextField @bind-Value="_dialogRecord.EmploymentStatus" Label="Employment Status"
+                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudSelect @bind-Value="_editingRecord.PersonDisability" Label="Person Disability"
+                    <MudSelect @bind-Value="_dialogRecord.PersonDisability" Label="Person Disability"
                                Variant="Variant.Outlined" Margin="Margin.Dense">
-                        <MudSelectItem Value="@("Y")">Yes</MudSelectItem>
+                        <MudSelectItem Value="@("Y")">Yes — Has disability</MudSelectItem>
                         <MudSelectItem Value="@("N")">No</MudSelectItem>
+                        <MudSelectItem Value="@("")">— Not specified —</MudSelectItem>
                     </MudSelect>
                 </MudItem>
+                @foreach (var colName in _customColumnNames)
+                {
+                    var cn = colName;
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Value="@(_dialogCustomValues.TryGetValue(cn, out var cv) ? cv : string.Empty)"
+                                      Label="@cn (custom)"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      ValueChanged="(string nv) => _dialogCustomValues[cn] = nv ?? string.Empty"/>
+                    </MudItem>
+                }
             </MudGrid>
+
+            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-5">
+                <MudButton OnClick="CloseRowDialog" Variant="Variant.Text">Cancel</MudButton>
+                <MudButton OnClick="SaveRow" Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Save">
+                    @(_isNewRecord ? "Add Row" : "Save Changes")
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@* ══════ ADD COLUMN DIALOG ══════ *@
+@if (_showColDialog)
+{
+    <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
+        <MudPaper Class="pa-6" Elevation="12" Style="width:420px; border-radius:12px;">
+            <MudText Typo="Typo.h6" Class="mb-1">Add Custom Column</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+                Adds a new editable column to the table. Values are included in exports.
+            </MudText>
+            <MudTextField @bind-Value="_newColName" Label="Column Name"
+                          Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Placeholder="e.g. Notes, Score, Flag"
+                          HelperText="Must be unique and non-empty."/>
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
-                <MudButton OnClick="CloseDialog" Color="Color.Default" Variant="Variant.Text">Cancel</MudButton>
-                <MudButton OnClick="SaveRecord" Color="Color.Primary" Variant="Variant.Filled">
-                    @(_isNewRecord ? "Add" : "Save")
+                <MudButton OnClick="() => _showColDialog = false" Variant="Variant.Text">Cancel</MudButton>
+                <MudButton OnClick="AddCustomColumn" Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.ViewColumn">
+                    Add Column
                 </MudButton>
             </MudStack>
         </MudPaper>
@@ -335,66 +388,86 @@
 }
 
 @code {
-    private string _globalSearch = string.Empty;
-    private List<PersonRecord> _displayedRecords = new();
-    private int _totalCount    => DataService.GetRecordCount();
-    private int _filteredCount => _displayedRecords.Count;
-    private int _pageSize = 25;
-    private bool _showFilters;
+    // ─── Column definitions ───────────────────────────────────────────────────
+    private record ColDef(string Key, string Label, bool IsCustom = false);
 
-    private class TextFilter { public string Label { get; init; } = ""; public string Value { get; set; } = ""; }
-
-    private List<TextFilter> _textFilters = new()
+    private static readonly List<ColDef> FixedCols = new()
     {
-        new() { Label = "Name"               },
-        new() { Label = "Surname"            },
-        new() { Label = "Identifier"         },
-        new() { Label = "Email Address"      },
-        new() { Label = "Local Municipality" },
-        new() { Label = "Host Company"       },
-        new() { Label = "Lead Company"       },
-        new() { Label = "Contact Details"    },
+        new("Name",              "Name"),
+        new("Surname",           "Surname"),
+        new("Identifier",        "Identifier"),
+        new("EmailAddress",      "Email"),
+        new("LocalMunicipality", "Municipality"),
+        new("HostCompany",       "Host Company"),
+        new("LeadCompany",       "Lead Company"),
+        new("JobType",           "Job Type"),
+        new("DemographicGroup",  "Demographic"),
+        new("Sex",               "Sex"),
+        new("ContactDetails",    "Contact"),
+        new("EmploymentStatus",  "Emp. Status"),
+        new("PersonDisability",  "Disability"),
     };
 
-    private string _filterSex         = string.Empty;
-    private string _filterStatus      = string.Empty;
-    private string _filterDemographic = string.Empty;
-    private string _filterJobType     = string.Empty;
-    private string _filterDisability  = string.Empty;
+    private List<string> _customColumnNames = new();
+    private Dictionary<int, Dictionary<string, string>> _customValues = new();
 
-    private List<string> _sexOptions         = new();
-    private List<string> _statusOptions      = new();
-    private List<string> _demographicOptions = new();
-    private List<string> _jobTypeOptions     = new();
+    private IReadOnlyList<ColDef> VisibleColumns =>
+        FixedCols.Concat(_customColumnNames.Select(n => new ColDef(n, n, true))).ToList();
 
-    private bool HasActiveFilters =>
-        !string.IsNullOrWhiteSpace(_globalSearch) ||
-        _textFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value)) ||
-        !string.IsNullOrWhiteSpace(_filterSex)         ||
-        !string.IsNullOrWhiteSpace(_filterStatus)      ||
-        !string.IsNullOrWhiteSpace(_filterDemographic) ||
-        !string.IsNullOrWhiteSpace(_filterJobType)     ||
-        !string.IsNullOrWhiteSpace(_filterDisability);
+    // ─── Data state ───────────────────────────────────────────────────────────
+    private List<PersonRecord> _allRecords = new();
+    private List<PersonRecord> _filtered   = new();
 
-    private int ActiveFilterCount
+    private int _page     = 0;
+    private int _pageSize = 25;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)_filtered.Count / _pageSize));
+    private List<PersonRecord> PagedData =>
+        _filtered.Skip(_page * _pageSize).Take(_pageSize).ToList();
+
+    private string _sortCol = string.Empty;
+    private bool   _sortAsc = true;
+    private int?   _selectedRow;
+
+    // ─── Filter state ─────────────────────────────────────────────────────────
+    private string _globalSearch = string.Empty;
+    private bool   _showFilters;
+    private Dictionary<string, string> _colFilters = new();
+
+    private string GetFilter(string k) =>
+        _colFilters.TryGetValue(k, out var v) ? v : string.Empty;
+
+    private void OnFilterChanged(string k, string val)
     {
-        get
-        {
-            int c = string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1;
-            c += _textFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
-            if (!string.IsNullOrWhiteSpace(_filterSex))         c++;
-            if (!string.IsNullOrWhiteSpace(_filterStatus))      c++;
-            if (!string.IsNullOrWhiteSpace(_filterDemographic)) c++;
-            if (!string.IsNullOrWhiteSpace(_filterJobType))     c++;
-            if (!string.IsNullOrWhiteSpace(_filterDisability))  c++;
-            return c;
-        }
+        _colFilters[k] = val;
+        _page = 0;
+        ApplyFilters();
     }
 
-    private bool _showDialog;
-    private bool _isNewRecord;
-    private PersonRecord? _editingRecord;
+    private bool HasFilters =>
+        !string.IsNullOrWhiteSpace(_globalSearch) ||
+        _colFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value));
 
+    private int ActiveFilterCount =>
+        (string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1) +
+        _colFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
+
+    // ─── Inline edit state ────────────────────────────────────────────────────
+    private int?    _editRow;
+    private string? _editCol;
+    private string  _editValue     = string.Empty;
+    private ElementReference _editInputRef;
+    private bool    _needsFocus;
+    private bool    _suppressRefresh;
+
+    // ─── Dialog state ─────────────────────────────────────────────────────────
+    private bool          _showRowDialog;
+    private bool          _isNewRecord;
+    private PersonRecord? _dialogRecord;
+    private Dictionary<string, string> _dialogCustomValues = new();
+    private bool   _showColDialog;
+    private string _newColName = string.Empty;
+
+    // ─── Lifecycle ────────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         DataService.OnDataChanged += Refresh;
@@ -402,119 +475,206 @@
     }
     public void Dispose() => DataService.OnDataChanged -= Refresh;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_needsFocus)
+        {
+            _needsFocus = false;
+            try { await _editInputRef.FocusAsync(); } catch { /* ignore */ }
+        }
+    }
+
     private void Refresh()
     {
-        BuildDropdowns();
+        if (_suppressRefresh) return;
+        _allRecords = DataService.GetRecords();
         ApplyFilters();
         InvokeAsync(StateHasChanged);
     }
 
-    private void BuildDropdowns()
-    {
-        var all = DataService.GetRecords();
-        _sexOptions         = all.Select(r => r.Sex).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
-        _statusOptions      = all.Select(r => r.EmploymentStatus).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
-        _demographicOptions = all.Select(r => r.DemographicGroup).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
-        _jobTypeOptions     = all.Select(r => r.JobType).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().OrderBy(x => x).ToList();
-    }
-
-    private void ToggleFilters() => _showFilters = !_showFilters;
-    private void OnTextFilterChanged(TextFilter filter, string value) { filter.Value = value; ApplyFilters(); }
-    private void ClearTextField(TextFilter filter) { filter.Value = string.Empty; ApplyFilters(); }
-    private void OnSexFilterChanged(string v)         { _filterSex         = v ?? string.Empty; ApplyFilters(); }
-    private void OnStatusFilterChanged(string v)      { _filterStatus      = v ?? string.Empty; ApplyFilters(); }
-    private void OnDemographicFilterChanged(string v) { _filterDemographic = v ?? string.Empty; ApplyFilters(); }
-    private void OnJobTypeFilterChanged(string v)     { _filterJobType     = v ?? string.Empty; ApplyFilters(); }
-    private void OnDisabilityFilterChanged(string v)  { _filterDisability  = v ?? string.Empty; ApplyFilters(); }
-
+    // ─── Filter / Sort ────────────────────────────────────────────────────────
     private void ApplyFilters()
     {
-        var q = DataService.GetRecords().AsEnumerable();
+        var q = _allRecords.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(_globalSearch))
         {
             var t = _globalSearch.Trim();
             q = q.Where(r =>
                 CI(r.Name, t) || CI(r.Surname, t) || CI(r.Identifier, t) ||
-                CI(r.EmailAddress, t) || CI(r.LocalMunicipality, t) || CI(r.HostCompany, t) ||
-                CI(r.LeadCompany, t) || CI(r.JobType, t) || CI(r.DemographicGroup, t) ||
-                CI(r.Sex, t) || CI(r.ContactDetails, t) ||
-                CI(r.EmploymentStatus, t) || CI(r.PersonDisability, t));
+                CI(r.EmailAddress, t) || CI(r.LocalMunicipality, t) ||
+                CI(r.HostCompany, t) || CI(r.LeadCompany, t) || CI(r.JobType, t) ||
+                CI(r.DemographicGroup, t) || CI(r.Sex, t) || CI(r.ContactDetails, t) ||
+                CI(r.EmploymentStatus, t) || CI(r.PersonDisability, t) ||
+                _customColumnNames.Any(cn => CI(GetCustomValue(r.RowNumber, cn), t)));
         }
 
-        foreach (var f in _textFilters.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
+        foreach (var kv in _colFilters.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
         {
-            var term = f.Value.Trim();
-            q = f.Label switch
-            {
-                "Name"               => q.Where(r => CI(r.Name, term)),
-                "Surname"            => q.Where(r => CI(r.Surname, term)),
-                "Identifier"         => q.Where(r => CI(r.Identifier, term)),
-                "Email Address"      => q.Where(r => CI(r.EmailAddress, term)),
-                "Local Municipality" => q.Where(r => CI(r.LocalMunicipality, term)),
-                "Host Company"       => q.Where(r => CI(r.HostCompany, term)),
-                "Lead Company"       => q.Where(r => CI(r.LeadCompany, term)),
-                "Contact Details"    => q.Where(r => CI(r.ContactDetails, term)),
-                _                    => q
-            };
+            var term = kv.Value.Trim();
+            var key  = kv.Key;
+            q = q.Where(r => CI(GetCellValue(r, key), term));
         }
 
-        if (!string.IsNullOrWhiteSpace(_filterSex))
-            q = q.Where(r => r.Sex.Equals(_filterSex, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(_filterStatus))
-            q = q.Where(r => r.EmploymentStatus.Equals(_filterStatus, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(_filterDemographic))
-            q = q.Where(r => r.DemographicGroup.Equals(_filterDemographic, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(_filterJobType))
-            q = q.Where(r => r.JobType.Equals(_filterJobType, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(_filterDisability))
-        {
-            bool wantDisabled = _filterDisability == "yes";
-            q = q.Where(r => r.HasDisability == wantDisabled);
-        }
+        if (!string.IsNullOrWhiteSpace(_sortCol))
+            q = _sortAsc
+                ? q.OrderBy(r  => GetCellValue(r, _sortCol), StringComparer.OrdinalIgnoreCase)
+                : q.OrderByDescending(r => GetCellValue(r, _sortCol), StringComparer.OrdinalIgnoreCase);
 
-        _displayedRecords = q.ToList();
+        _filtered = q.ToList();
+        if (_page >= TotalPages) _page = Math.Max(0, TotalPages - 1);
     }
 
-    private static bool CI(string src, string term) =>
-        src.Contains(term, StringComparison.OrdinalIgnoreCase);
+    private void ToggleSort(string col)
+    {
+        if (_sortCol == col) _sortAsc = !_sortAsc;
+        else { _sortCol = col; _sortAsc = true; }
+        _page = 0;
+        ApplyFilters();
+    }
 
     private void ClearAllFilters()
     {
         _globalSearch = string.Empty;
-        foreach (var f in _textFilters) f.Value = string.Empty;
-        _filterSex = _filterStatus = _filterDemographic = _filterJobType = _filterDisability = string.Empty;
+        _colFilters.Clear();
         ApplyFilters();
     }
 
-    private async Task DownloadTemplate()
+    private void OnPageSizeChanged(int size) { _pageSize = size; _page = 0; }
+
+    private static bool CI(string src, string term) =>
+        (src ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase);
+
+    // ─── Cell value helpers ───────────────────────────────────────────────────
+    private string GetCellValue(PersonRecord r, string key) => key switch
     {
-        try
+        "Name"              => r.Name,
+        "Surname"           => r.Surname,
+        "Identifier"        => r.Identifier,
+        "EmailAddress"      => r.EmailAddress,
+        "LocalMunicipality" => r.LocalMunicipality,
+        "HostCompany"       => r.HostCompany,
+        "LeadCompany"       => r.LeadCompany,
+        "JobType"           => r.JobType,
+        "DemographicGroup"  => r.DemographicGroup,
+        "Sex"               => r.Sex,
+        "ContactDetails"    => r.ContactDetails,
+        "EmploymentStatus"  => r.EmploymentStatus,
+        "PersonDisability"  => r.PersonDisability,
+        _                   => GetCustomValue(r.RowNumber, key),
+    };
+
+    // Renders styled chips for Sex and Disability columns, plain text otherwise
+    private MarkupString GetDisplayValue(PersonRecord r, string key)
+    {
+        var raw = GetCellValue(r, key);
+        if (key == "Sex" && !string.IsNullOrWhiteSpace(raw))
         {
-            var bytes     = DataService.GenerateTemplate();
-            var byteArray = bytes.Select(b => (int)b).ToArray();
-            await JS.InvokeVoidAsync("downloadFileFromBytes",
-                "ParticipantTemplate.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                byteArray);
+            var cls = raw.Equals("Female", StringComparison.OrdinalIgnoreCase) ? "xchip-f" : "xchip-m";
+            return new MarkupString($"<span class='xchip {cls}'>{raw}</span>");
         }
-        catch (Exception ex)
+        if (key == "PersonDisability" && r.HasDisability)
+            return new MarkupString("<span class='xchip xchip-y'>Yes</span>");
+
+        return new MarkupString(System.Net.WebUtility.HtmlEncode(raw));
+    }
+
+    private void SetCellValue(PersonRecord r, string key, string val)
+    {
+        switch (key)
         {
-            Logger.LogError(ex, "Template download error");
-            Snackbar.Add("Failed to generate template.", Severity.Error);
+            case "Name":              r.Name              = val; break;
+            case "Surname":           r.Surname           = val; break;
+            case "Identifier":        r.Identifier        = val; break;
+            case "EmailAddress":      r.EmailAddress      = val; break;
+            case "LocalMunicipality": r.LocalMunicipality = val; break;
+            case "HostCompany":       r.HostCompany       = val; break;
+            case "LeadCompany":       r.LeadCompany       = val; break;
+            case "JobType":           r.JobType           = val; break;
+            case "DemographicGroup":  r.DemographicGroup  = val; break;
+            case "Sex":               r.Sex               = val; break;
+            case "ContactDetails":    r.ContactDetails    = val; break;
+            case "EmploymentStatus":  r.EmploymentStatus  = val; break;
+            case "PersonDisability":  r.PersonDisability  = val; break;
+            default:
+                if (!_customValues.ContainsKey(r.RowNumber))
+                    _customValues[r.RowNumber] = new Dictionary<string, string>();
+                _customValues[r.RowNumber][key] = val;
+                break;
         }
     }
 
-    private void OpenAddDialog()
+    private string GetCustomValue(int rowNum, string colName)
     {
-        _editingRecord = new PersonRecord();
-        _isNewRecord   = true;
-        _showDialog    = true;
+        if (_customValues.TryGetValue(rowNum, out var d) &&
+            d.TryGetValue(colName, out var v)) return v;
+        return string.Empty;
     }
 
-    private void OpenEditDialog(PersonRecord r)
+    private bool IsFixedColumn(string key) => FixedCols.Any(c => c.Key == key);
+
+    // ─── Inline cell editing ──────────────────────────────────────────────────
+    private void BeginEdit(int rowNum, string colKey, string currentValue)
     {
-        _editingRecord = new PersonRecord
+        if (_editRow == rowNum && _editCol == colKey) return;
+        if (_editRow is not null) CommitEdit();
+        _editRow     = rowNum;
+        _editCol     = colKey;
+        _editValue   = currentValue;
+        _selectedRow = rowNum;
+        _needsFocus  = true;
+    }
+
+    private void CommitEdit()
+    {
+        if (_editRow is null || _editCol is null) return;
+
+        var record = _allRecords.FirstOrDefault(r => r.RowNumber == _editRow);
+        if (record != null)
+        {
+            var oldVal = GetCellValue(record, _editCol);
+            if (oldVal != _editValue)
+            {
+                SetCellValue(record, _editCol, _editValue);
+                if (IsFixedColumn(_editCol))
+                {
+                    _suppressRefresh = true;
+                    DataService.UpdateRecord(record);
+                    _suppressRefresh = false;
+                    ApplyFilters(); // refresh filtered view locally
+                }
+            }
+        }
+        _editRow   = null;
+        _editCol   = null;
+        _editValue = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        _editRow = null; _editCol = null; _editValue = string.Empty;
+    }
+
+    private void HandleEditKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")  CommitEdit();
+        if (e.Key == "Escape") CancelEdit();
+    }
+
+    // ─── Row dialogs ──────────────────────────────────────────────────────────
+    private void OpenAddRowDialog()
+    {
+        CommitEdit();
+        _dialogRecord       = new PersonRecord();
+        _dialogCustomValues = _customColumnNames.ToDictionary(n => n, _ => string.Empty);
+        _isNewRecord        = true;
+        _showRowDialog      = true;
+    }
+
+    private void OpenEditRowDialog(PersonRecord r)
+    {
+        CommitEdit();
+        _dialogRecord = new PersonRecord
         {
             RowNumber = r.RowNumber, Name = r.Name, Surname = r.Surname,
             Identifier = r.Identifier, EmailAddress = r.EmailAddress,
@@ -524,48 +684,192 @@
             ContactDetails = r.ContactDetails, EmploymentStatus = r.EmploymentStatus,
             PersonDisability = r.PersonDisability
         };
-        _isNewRecord = false;
-        _showDialog  = true;
+        _dialogCustomValues = _customColumnNames.ToDictionary(
+            n => n, n => GetCustomValue(r.RowNumber, n));
+        _isNewRecord   = false;
+        _showRowDialog = true;
     }
 
-    private void SaveRecord()
+    private void SaveRow()
     {
-        if (_editingRecord is null) return;
-        if (_isNewRecord) { DataService.AddRecord(_editingRecord);   Snackbar.Add("Record added.",   Severity.Success); }
-        else              { DataService.UpdateRecord(_editingRecord); Snackbar.Add("Record updated.", Severity.Success); }
-        CloseDialog();
+        if (_dialogRecord is null) return;
+        if (string.IsNullOrWhiteSpace(_dialogRecord.Name) &&
+            string.IsNullOrWhiteSpace(_dialogRecord.Surname))
+        {
+            Snackbar.Add("Name or Surname is required.", Severity.Warning);
+            return;
+        }
+        if (_isNewRecord)
+        {
+            DataService.AddRecord(_dialogRecord);
+            Snackbar.Add($"Row added: {_dialogRecord.Name} {_dialogRecord.Surname}.", Severity.Success);
+        }
+        else
+        {
+            DataService.UpdateRecord(_dialogRecord);
+            Snackbar.Add("Row updated.", Severity.Success);
+        }
+
+        // Persist custom column values
+        var rowNum = _dialogRecord.RowNumber;
+        foreach (var kv in _dialogCustomValues)
+        {
+            if (!_customValues.ContainsKey(rowNum))
+                _customValues[rowNum] = new Dictionary<string, string>();
+            _customValues[rowNum][kv.Key] = kv.Value;
+        }
+
+        CloseRowDialog();
     }
 
-    private void CloseDialog() { _showDialog = false; _editingRecord = null; }
+    private void CloseRowDialog()
+    {
+        _showRowDialog      = false;
+        _dialogRecord       = null;
+        _dialogCustomValues = new();
+    }
 
+    // ─── Delete ───────────────────────────────────────────────────────────────
     private async Task ConfirmDelete(PersonRecord r)
     {
-        bool? result = await DialogService.ShowMessageBox(
-            "Confirm Delete", $"Delete record for {r.FullName}?",
+        CommitEdit();
+        bool? ok = await DialogService.ShowMessageBox(
+            "Delete Row",
+            $"Delete row #{r.RowNumber} — {r.Name} {r.Surname}? This cannot be undone.",
             yesText: "Delete", cancelText: "Cancel");
-        if (result == true)
+        if (ok == true)
         {
+            _customValues.Remove(r.RowNumber);
             DataService.DeleteRecord(r.RowNumber);
-            Snackbar.Add($"Deleted {r.FullName}.", Severity.Info);
+            Snackbar.Add($"Row #{r.RowNumber} deleted.", Severity.Info);
         }
     }
 
+    // ─── Custom column ────────────────────────────────────────────────────────
+    private void OpenAddColumnDialog()
+    {
+        _newColName    = string.Empty;
+        _showColDialog = true;
+    }
+
+    private void AddCustomColumn()
+    {
+        var name = _newColName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        { Snackbar.Add("Column name cannot be empty.", Severity.Warning); return; }
+
+        if (_customColumnNames.Contains(name, StringComparer.OrdinalIgnoreCase) ||
+            FixedCols.Any(c => c.Key.Equals(name, StringComparison.OrdinalIgnoreCase) ||
+                               c.Label.Equals(name, StringComparison.OrdinalIgnoreCase)))
+        { Snackbar.Add($"Column '{name}' already exists.", Severity.Warning); return; }
+
+        _customColumnNames.Add(name);
+        _showColDialog = false;
+        _newColName    = string.Empty;
+        Snackbar.Add($"Column '{name}' added. Click any cell in that column to enter values.", Severity.Success);
+    }
+
+    // ─── Export (uses base64 for reliable downloads) ──────────────────────────
     private async Task ExportData(bool allData)
     {
         try
         {
-            var records   = allData ? DataService.GetRecords() : _displayedRecords;
-            var bytes     = DataService.ExportToExcel(records);
-            var fileName  = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
-            var byteArray = bytes.Select(b => (int)b).ToArray();
-            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", byteArray);
+            CommitEdit();
+            var records = allData ? _allRecords : _filtered;
+            if (records.Count == 0)
+            { Snackbar.Add("No records to export.", Severity.Warning); return; }
+
+            var bytes  = BuildExportBytes(records);
+            var base64 = Convert.ToBase64String(bytes);
+            var file   = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
+            await JS.InvokeVoidAsync("downloadFileBase64", file,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
+
             Snackbar.Add($"Exported {records.Count} records.", Severity.Success);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Export error");
             Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private byte[] BuildExportBytes(List<PersonRecord> records)
+    {
+        using var pkg = new ExcelPackage();
+        var ws = pkg.Workbook.Worksheets.Add("Participants");
+
+        var headers = new List<string>
+        {
+            "#", "Name", "Surname", "Identifier", "Email Address",
+            "Local Municipality", "Host Company", "Lead Company",
+            "Job Type", "Demographic Group", "Sex", "Contact Details",
+            "Employment Status", "Person Disability"
+        };
+        headers.AddRange(_customColumnNames);
+
+        for (int c = 0; c < headers.Count; c++)
+        {
+            var cell = ws.Cells[1, c + 1];
+            cell.Value = headers[c];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0x10, 0x74, 0xD6));
+            cell.Style.Font.Color.SetColor(Color.White);
+        }
+
+        int row = 2;
+        foreach (var r in records)
+        {
+            ws.Cells[row,  1].Value = r.RowNumber;
+            ws.Cells[row,  2].Value = r.Name;
+            ws.Cells[row,  3].Value = r.Surname;
+            ws.Cells[row,  4].Value = r.Identifier;
+            ws.Cells[row,  5].Value = r.EmailAddress;
+            ws.Cells[row,  6].Value = r.LocalMunicipality;
+            ws.Cells[row,  7].Value = r.HostCompany;
+            ws.Cells[row,  8].Value = r.LeadCompany;
+            ws.Cells[row,  9].Value = r.JobType;
+            ws.Cells[row, 10].Value = r.DemographicGroup;
+            ws.Cells[row, 11].Value = r.Sex;
+            ws.Cells[row, 12].Value = r.ContactDetails;
+            ws.Cells[row, 13].Value = r.EmploymentStatus;
+            ws.Cells[row, 14].Value = r.PersonDisability;
+
+            for (int c = 0; c < _customColumnNames.Count; c++)
+                ws.Cells[row, 15 + c].Value =
+                    GetCustomValue(r.RowNumber, _customColumnNames[c]);
+
+            if (row % 2 == 0)
+            {
+                using var rng = ws.Cells[row, 1, row, headers.Count];
+                rng.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                rng.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0xF0, 0xF4, 0xFF));
+            }
+            row++;
+        }
+
+        if (ws.Dimension != null)
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+        return pkg.GetAsByteArray();
+    }
+
+    private async Task DownloadTemplate()
+    {
+        try
+        {
+            var bytes  = DataService.GenerateTemplate();
+            var base64 = Convert.ToBase64String(bytes);
+            await JS.InvokeVoidAsync("downloadFileBase64", "ParticipantTemplate.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
+            Snackbar.Add("Template downloaded.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Template error");
+            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
         }
     }
 }
