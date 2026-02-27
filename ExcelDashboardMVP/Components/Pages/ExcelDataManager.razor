@@ -5,7 +5,6 @@
 @using Microsoft.JSInterop
 @using OfficeOpenXml
 @using OfficeOpenXml.Style
-@using System.Drawing
 @inject ExcelDataService DataService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -50,9 +49,9 @@
     @* ══════ TOOLBAR ══════ *@
     <div class="xtb">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="flex-wrap:wrap; gap:5px;">
-            <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="Color.Primary" Size="Size.Small"/>
+            <MudIcon Icon="@Icons.Material.Filled.TableChart" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small"/>
             <MudText Typo="Typo.subtitle1" Style="font-weight:700; color:#1e2393; margin-right:6px;">Data Table</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
+            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">
                 @_filtered.Count / @_allRecords.Count rows &nbsp;·&nbsp; @VisibleColumns.Count cols
                 @if (HasFilters)
                 {
@@ -69,11 +68,11 @@
 
             <div style="flex:1; min-width:4px;"/>
 
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+            <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small"
                        StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddRowDialog">
                 Add Row
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Info" Size="MudBlazor.Size.Small"
                        StartIcon="@Icons.Material.Filled.ViewColumn" OnClick="OpenAddColumnDialog">
                 + Column
             </MudButton>
@@ -81,14 +80,14 @@
             <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
 
             <MudButton Variant="@(_showFilters ? Variant.Filled : Variant.Outlined)"
-                       Color="@(HasFilters ? Color.Warning : Color.Default)"
-                       Size="Size.Small" StartIcon="@Icons.Material.Filled.FilterAlt"
+                       Color="@(HasFilters ? MudBlazor.Color.Warning : MudBlazor.Color.Default)"
+                       Size="MudBlazor.Size.Small" StartIcon="@Icons.Material.Filled.FilterAlt"
                        OnClick="() => _showFilters = !_showFilters">
                 Filters
             </MudButton>
             @if (HasFilters)
             {
-                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Error" Size="MudBlazor.Size.Small"
                            StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="ClearAllFilters">
                     Clear
                 </MudButton>
@@ -96,19 +95,19 @@
 
             <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
 
-            <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Success" Size="MudBlazor.Size.Small"
                        StartIcon="@Icons.Material.Filled.FileDownload"
                        OnClick="@(() => ExportData(false))"
                        Disabled="@(_filtered.Count == 0)">
                 Export (@_filtered.Count)
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Success" Size="MudBlazor.Size.Small"
                        StartIcon="@Icons.Material.Filled.Download"
                        OnClick="@(() => ExportData(true))"
                        Disabled="@(_allRecords.Count == 0)">
                 All (@_allRecords.Count)
             </MudButton>
-            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small"
+            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary" Size="MudBlazor.Size.Small"
                        StartIcon="@Icons.Material.Filled.Description"
                        OnClick="DownloadTemplate">
                 Template
@@ -122,12 +121,12 @@
         {
             <MudStack AlignItems="AlignItems.Center" Class="py-16">
                 <MudIcon Icon="@Icons.Material.Filled.TableView" Style="font-size:5rem; opacity:0.15;"/>
-                <MudText Typo="Typo.h6" Color="Color.Secondary">No data loaded</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">Go to <strong>Uploads</strong> to import an Excel file.</MudText>
+                <MudText Typo="Typo.h6" Color="MudBlazor.Color.Secondary">No data loaded</MudText>
+                <MudText Typo="Typo.body2" Color="MudBlazor.Color.Secondary">Go to <strong>Uploads</strong> to import an Excel file.</MudText>
                 <MudStack Row="true" Spacing="2" Class="mt-2">
-                    <MudButton Href="/upload" Variant="Variant.Filled" Color="Color.Primary"
+                    <MudButton Href="/upload" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
                                StartIcon="@Icons.Material.Filled.Upload">Upload Data</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                    <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary"
                                OnClick="DownloadTemplate" StartIcon="@Icons.Material.Filled.Download">Template</MudButton>
                 </MudStack>
             </MudStack>
@@ -195,11 +194,11 @@
                             }
                             <td class="xac">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Size="Size.Small" Color="Color.Primary"
+                                               Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Primary"
                                                OnClick="() => OpenEditRowDialog(r)"
                                                Style="padding:2px;"/>
                                 <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
-                                               Size="Size.Small" Color="Color.Error"
+                                               Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Error"
                                                OnClick="() => ConfirmDelete(r)"
                                                Style="padding:2px;"/>
                             </td>
@@ -226,7 +225,7 @@
     {
         <div class="xfoot">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">
                     @if (_filtered.Count > 0)
                     {
                         <span>Rows @(_page * _pageSize + 1)–@(Math.Min((_page + 1) * _pageSize, _filtered.Count)) of @_filtered.Count</span>
@@ -234,9 +233,10 @@
                     @if (HasFilters) { <span> (of @_allRecords.Count total)</span> }
                 </MudText>
                 <div style="flex:1;"/>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Rows per page:</MudText>
-                <MudSelect @bind-Value="_pageSize" T="int" Variant="Variant.Outlined" Margin="Margin.Dense"
-                           Style="width:76px;" ValueChanged="OnPageSizeChanged">
+                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">Rows per page:</MudText>
+                <MudSelect T="int" Value="_pageSize" ValueChanged="OnPageSizeChanged"
+                           Variant="Variant.Outlined" Margin="Margin.Dense"
+                           Style="width:76px;">
                     <MudSelectItem Value="10">10</MudSelectItem>
                     <MudSelectItem Value="25">25</MudSelectItem>
                     <MudSelectItem Value="50">50</MudSelectItem>
@@ -244,19 +244,19 @@
                     <MudSelectItem Value="500">500</MudSelectItem>
                 </MudSelect>
                 <MudIconButton Icon="@Icons.Material.Filled.FirstPage"
-                               Size="Size.Small" Disabled="@(_page == 0)"
+                               Size="MudBlazor.Size.Small" Disabled="@(_page == 0)"
                                OnClick="() => _page = 0"/>
                 <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore"
-                               Size="Size.Small" Disabled="@(_page == 0)"
+                               Size="MudBlazor.Size.Small" Disabled="@(_page == 0)"
                                OnClick="() => { if (_page > 0) _page--; }"/>
                 <MudText Typo="Typo.caption" Style="min-width:72px; text-align:center;">
                     @(_page + 1) / @TotalPages
                 </MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.NavigateNext"
-                               Size="Size.Small" Disabled="@(_page >= TotalPages - 1)"
+                               Size="MudBlazor.Size.Small" Disabled="@(_page >= TotalPages - 1)"
                                OnClick="() => { if (_page < TotalPages - 1) _page++; }"/>
                 <MudIconButton Icon="@Icons.Material.Filled.LastPage"
-                               Size="Size.Small" Disabled="@(_page >= TotalPages - 1)"
+                               Size="MudBlazor.Size.Small" Disabled="@(_page >= TotalPages - 1)"
                                OnClick="() => _page = TotalPages - 1"/>
             </MudStack>
         </div>
@@ -272,10 +272,10 @@
             <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
                 <MudText Typo="Typo.h6">
                     <MudIcon Icon="@(_isNewRecord ? Icons.Material.Filled.PersonAdd : Icons.Material.Filled.Edit)"
-                             Size="Size.Small" Class="mr-1"/>
+                             Size="MudBlazor.Size.Small" Class="mr-1"/>
                     @(_isNewRecord ? "Add New Row" : $"Edit Row #{_dialogRecord.RowNumber}")
                 </MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CloseRowDialog"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="MudBlazor.Size.Small" OnClick="CloseRowDialog"/>
             </MudStack>
 
             <MudGrid Spacing="2">
@@ -345,7 +345,7 @@
                     var cn = colName;
                     <MudItem xs="12" sm="6">
                         <MudTextField Value="@(_dialogCustomValues.TryGetValue(cn, out var cv) ? cv : string.Empty)"
-                                      Label="@cn (custom)"
+                                      Label="@($"{cn} (custom)")"
                                       Variant="Variant.Outlined" Margin="Margin.Dense"
                                       ValueChanged="(string nv) => _dialogCustomValues[cn] = nv ?? string.Empty"/>
                     </MudItem>
@@ -354,7 +354,7 @@
 
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-5">
                 <MudButton OnClick="CloseRowDialog" Variant="Variant.Text">Cancel</MudButton>
-                <MudButton OnClick="SaveRow" Variant="Variant.Filled" Color="Color.Primary"
+                <MudButton OnClick="SaveRow" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
                            StartIcon="@Icons.Material.Filled.Save">
                     @(_isNewRecord ? "Add Row" : "Save Changes")
                 </MudButton>
@@ -369,7 +369,7 @@
     <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
         <MudPaper Class="pa-6" Elevation="12" Style="width:420px; border-radius:12px;">
             <MudText Typo="Typo.h6" Class="mb-1">Add Custom Column</MudText>
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-4">
+            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary" Class="mb-4">
                 Adds a new editable column to the table. Values are included in exports.
             </MudText>
             <MudTextField @bind-Value="_newColName" Label="Column Name"
@@ -378,7 +378,7 @@
                           HelperText="Must be unique and non-empty."/>
             <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
                 <MudButton OnClick="() => _showColDialog = false" Variant="Variant.Text">Cancel</MudButton>
-                <MudButton OnClick="AddCustomColumn" Variant="Variant.Filled" Color="Color.Primary"
+                <MudButton OnClick="AddCustomColumn" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
                            StartIcon="@Icons.Material.Filled.ViewColumn">
                     Add Column
                 </MudButton>
@@ -641,7 +641,7 @@
                     _suppressRefresh = true;
                     DataService.UpdateRecord(record);
                     _suppressRefresh = false;
-                    ApplyFilters(); // refresh filtered view locally
+                    ApplyFilters();
                 }
             }
         }
@@ -710,7 +710,6 @@
             Snackbar.Add("Row updated.", Severity.Success);
         }
 
-        // Persist custom column values
         var rowNum = _dialogRecord.RowNumber;
         foreach (var kv in _dialogCustomValues)
         {
@@ -769,7 +768,7 @@
         Snackbar.Add($"Column '{name}' added. Click any cell in that column to enter values.", Severity.Success);
     }
 
-    // ─── Export (uses base64 for reliable downloads) ──────────────────────────
+    // ─── Export ───────────────────────────────────────────────────────────────
     private async Task ExportData(bool allData)
     {
         try
@@ -815,8 +814,8 @@
             cell.Value = headers[c];
             cell.Style.Font.Bold = true;
             cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
-            cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0x10, 0x74, 0xD6));
-            cell.Style.Font.Color.SetColor(Color.White);
+            cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0x10, 0x74, 0xD6));
+            cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
         }
 
         int row = 2;
@@ -845,7 +844,7 @@
             {
                 using var rng = ws.Cells[row, 1, row, headers.Count];
                 rng.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                rng.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(0xF0, 0xF4, 0xFF));
+                rng.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0xF0, 0xF4, 0xFF));
             }
             row++;
         }
