@@ -133,7 +133,9 @@ namespace ExcelDashboardMVP.Services
                 }
             };
 
-            var url    = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={apiKey}";
+            var model  = _config["Gemini:Model"] ?? "gemini-2.0-flash-lite";
+            var url    = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
+            _logger.LogInformation("Using Gemini model: {M}", model);
             var json   = JsonSerializer.Serialize(requestBody);
             var client = _httpClientFactory.CreateClient("Gemini");
 
