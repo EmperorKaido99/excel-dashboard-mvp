@@ -133,12 +133,37 @@ namespace ExcelDashboardMVP.Services
                 }
             };
 
-            var url     = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
-            var json    = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var url    = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            var json   = JsonSerializer.Serialize(requestBody);
+            var client = _httpClientFactory.CreateClient("Gemini");
 
-            var client       = _httpClientFactory.CreateClient("Gemini");
-            var httpResponse = await client.PostAsync(url, content);
+            // ── Retry up to 3 times on 429 (free-tier rate limit) ─────────────
+            HttpResponseMessage httpResponse = null!;
+            int[] retryDelaysMs = { 5000, 15000, 30000 };
+
+            for (int attempt = 0; attempt <= retryDelaysMs.Length; attempt++)
+            {
+                // Re-create content each attempt (StringContent is single-use)
+                var reqContent = new StringContent(json, Encoding.UTF8, "application/json");
+                httpResponse = await client.PostAsync(url, reqContent);
+
+                if ((int)httpResponse.StatusCode != 429)
+                    break;
+
+                if (attempt < retryDelaysMs.Length)
+                {
+                    _logger.LogWarning("Gemini 429 rate-limited. Retrying in {D}ms (attempt {A}/{Max})...",
+                        retryDelaysMs[attempt], attempt + 1, retryDelaysMs.Length);
+                    await Task.Delay(retryDelaysMs[attempt]);
+                }
+            }
+
+            if ((int)httpResponse.StatusCode == 429)
+                return new AiChatResponse
+                {
+                    Message = "Dash is busy right now (rate limit reached). Please wait a few seconds and try again."
+                };
+
             httpResponse.EnsureSuccessStatusCode();
 
             var responseJson = await httpResponse.Content.ReadAsStringAsync();
