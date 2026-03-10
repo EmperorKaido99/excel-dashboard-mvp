@@ -6,6 +6,7 @@
 @using OfficeOpenXml
 @using OfficeOpenXml.Style
 @inject ExcelDataService DataService
+@inject AiAgentService AiAgent
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject ILogger<ExcelDataManager> Logger
@@ -96,7 +97,7 @@
     .xchip-f { background: #f3e8ff; color: #7c3aed; }
     .xchip-m { background: #e0f2fe; color: #0369a1; }
 
-    /* Row action buttons - plain HTML, no MudBlazor */
+    /* Row action buttons */
     .xbtn {
         display: inline-flex; align-items: center; justify-content: center;
         border: none; background: transparent; cursor: pointer;
@@ -126,7 +127,7 @@
     .tbtn-sec     { color: #1e2393; border-color: #1e2393; }
     .tbtn-muted   { color: #666; border-color: #aaa; }
 
-    /* Search box in toolbar */
+    /* Search */
     .xsearch {
         border: 1px solid #c4cfff; border-radius: 5px; padding: 5px 10px;
         font-size: 13px; width: 200px; font-family: inherit;
@@ -138,8 +139,9 @@
         display: inline-block; border-radius: 8px; padding: 1px 8px;
         font-size: 11px; font-weight: 600;
     }
-    .xbadge-blue { background: #eef2ff; color: #1e2393; }
+    .xbadge-blue   { background: #eef2ff; color: #1e2393; }
     .xbadge-orange { background: #fff3e0; color: #e65100; }
+    .xbadge-ai     { background: #e8f5e9; color: #2e7d32; }
 
     /* Pagination */
     .pgbtn {
@@ -191,8 +193,7 @@
 </style>
 
 @* ═══════════════════════════════════════════════
-   MODALS — fixed position, rendered at top level,
-   completely bypasses all overflow / z-index issues
+   MODALS — fixed position, bypasses overflow / z-index
    ═══════════════════════════════════════════════ *@
 
 @* Add / Edit Row *@
@@ -323,6 +324,10 @@
             {
                 <span class="xbadge xbadge-orange">@ActiveFilterCount filter(s) active</span>
             }
+            @if (_aiFilterActive)
+            {
+                <span class="xbadge xbadge-ai">🤖 Dash filter</span>
+            }
 
             <input class="xsearch"
                    placeholder="🔍 Search all columns..."
@@ -435,7 +440,6 @@
                                 </td>
                             }
 
-                            @* CRITICAL: stopPropagation prevents td @onclick from swallowing button clicks *@
                             <td class="xac" @onclick:stopPropagation="true">
                                 <button class="xbtn xbtn-edit" type="button"
                                         title="Edit row"
@@ -546,10 +550,11 @@
     // ── Filters ─────────────────────────────────────────────────────────────
     private string _globalSearch = string.Empty;
     private bool   _showFilters;
+    private bool   _aiFilterActive;   // shows "Dash filter" badge
     private Dictionary<string, string> _colFilters = new();
     private string GetFilter(string k) => _colFilters.TryGetValue(k, out var v) ? v : string.Empty;
-    private void OnFilterChanged(string k, string val) { _colFilters[k] = val; _page = 0; ApplyFilters(); }
-    private void OnGlobalSearchInput(ChangeEventArgs e) { _globalSearch = e.Value?.ToString() ?? string.Empty; _page = 0; ApplyFilters(); }
+    private void OnFilterChanged(string k, string val) { _colFilters[k] = val; _aiFilterActive = false; _page = 0; ApplyFilters(); }
+    private void OnGlobalSearchInput(ChangeEventArgs e) { _globalSearch = e.Value?.ToString() ?? string.Empty; _aiFilterActive = false; _page = 0; ApplyFilters(); }
     private bool HasFilters => !string.IsNullOrWhiteSpace(_globalSearch) || _colFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value));
     private int ActiveFilterCount => (string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1) + _colFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
 
@@ -577,10 +582,20 @@
     protected override void OnInitialized()
     {
         DataService.OnDataChanged += Refresh;
+        AiAgent.OnDataTableCommand += HandleAiCommand;
+
         Refresh();
+
+        // Pick up any pending AI command (e.g. navigated here from chat action)
+        var pending = AiAgent.ConsumePendingCommand();
+        if (pending != null) HandleAiCommand(pending);
     }
 
-    public void Dispose() => DataService.OnDataChanged -= Refresh;
+    public void Dispose()
+    {
+        DataService.OnDataChanged -= Refresh;
+        AiAgent.OnDataTableCommand -= HandleAiCommand;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -596,6 +611,52 @@
         if (_suppressRefresh) return;
         _allRecords = DataService.GetRecords();
         ApplyFilters();
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ── AI Command Handler ───────────────────────────────────────────────────
+    private void HandleAiCommand(DataTableCommand cmd)
+    {
+        switch (cmd.Type)
+        {
+            case "filter":
+                if (cmd.Parameters.TryGetValue("column", out var col) &&
+                    cmd.Parameters.TryGetValue("value",  out var val))
+                {
+                    _globalSearch = string.Empty;
+                    _colFilters.Clear();
+                    _colFilters[col] = val;
+                    _showFilters     = true;
+                    _aiFilterActive  = true;
+                    _page = 0;
+                    ApplyFilters();
+                    Snackbar.Add($"🤖 Dash filtered by {col}: \"{val}\" — {_filtered.Count} result(s)", Severity.Info,
+                        cfg => { cfg.VisibleStateDuration = 4000; });
+                }
+                break;
+
+            case "export":
+                if (cmd.Parameters.TryGetValue("column", out var ecol) &&
+                    cmd.Parameters.TryGetValue("value",  out var eval))
+                {
+                    _globalSearch = string.Empty;
+                    _colFilters.Clear();
+                    _colFilters[ecol] = eval;
+                    _aiFilterActive   = true;
+                    ApplyFilters();
+                    Snackbar.Add($"🤖 Dash: exporting {_filtered.Count} records where {ecol} = \"{eval}\"", Severity.Success);
+                    _ = ExportData(false);
+                }
+                break;
+
+            case "clear_filters":
+                _aiFilterActive = false;
+                ClearAllFilters();
+                Snackbar.Add("🤖 Dash cleared all filters", Severity.Info,
+                    cfg => { cfg.VisibleStateDuration = 3000; });
+                break;
+        }
+
         InvokeAsync(StateHasChanged);
     }
 
@@ -638,7 +699,7 @@
         _page = 0; ApplyFilters();
     }
 
-    private void ClearAllFilters() { _globalSearch = string.Empty; _colFilters.Clear(); ApplyFilters(); }
+    private void ClearAllFilters() { _globalSearch = string.Empty; _colFilters.Clear(); _aiFilterActive = false; ApplyFilters(); }
     private void OnPageSizeChanged(ChangeEventArgs e) { if (int.TryParse(e.Value?.ToString(), out var s)) { _pageSize = s; _page = 0; } }
     private void GoToPage(int p) => _page = Math.Clamp(p, 0, TotalPages - 1);
     private static bool CI(string src, string term) => (src ?? "").Contains(term, StringComparison.OrdinalIgnoreCase);

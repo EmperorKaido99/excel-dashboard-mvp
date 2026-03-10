@@ -15,8 +15,14 @@ builder.Services.AddRazorComponents()
 // MudBlazor (theme, dialog, snackbar, resize-listener, etc.)
 builder.Services.AddMudServices();
 
+// ── HttpClient (used by AiAgentService for Gemini) ────────────────────────
+builder.Services.AddHttpClient("Gemini");
+
 // ── ExcelDataService ──────────────────────────────────────────────────────
 builder.Services.AddSingleton<ExcelDataService>();
+
+// ── AiAgentService ────────────────────────────────────────────────────────
+builder.Services.AddSingleton<AiAgentService>();
 
 // ── ExcelImportService ────────────────────────────────────────────────────
 // Stateless — Scoped is fine.
