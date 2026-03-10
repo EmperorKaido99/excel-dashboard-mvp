@@ -7,7 +7,6 @@
 @using OfficeOpenXml.Style
 @inject ExcelDataService DataService
 @inject ISnackbar Snackbar
-@inject IDialogService DialogService
 @inject IJSRuntime JS
 @inject ILogger<ExcelDataManager> Logger
 @implements IDisposable
@@ -15,382 +14,365 @@
 <PageTitle>Data Table</PageTitle>
 
 <style>
-    /* ── Page wrapper ── */
-    .xpage {
-        display: flex;
-        flex-direction: column;
-        padding: 12px 16px;
-        box-sizing: border-box;
-        min-height: calc(100vh - 58px);
-    }
+    .xpage { padding: 12px 16px; box-sizing: border-box; }
 
-    /* ── Centred card shell ── */
     .xcard {
-        width: 100%;
-        max-width: 1600px;
-        margin: 0 auto;
-        background: white;
-        border: 1px solid #d0d8f0;
-        border-radius: 10px;
-        overflow: hidden;           /* keeps rounded corners on children */
-        box-shadow: 0 2px 8px rgba(30,35,147,.08);
-        display: flex;
-        flex-direction: column;
-        flex: 1;
+        width: 100%; max-width: 1600px; margin: 0 auto;
+        background: white; border: 1px solid #d0d8f0;
+        border-radius: 10px; box-shadow: 0 2px 8px rgba(30,35,147,.08);
+        display: flex; flex-direction: column;
     }
 
-    /* ── Toolbar ── */
+    /* Toolbar */
     .xtb {
-        flex-shrink: 0;
-        background: #f5f7ff;
+        flex-shrink: 0; background: #f5f7ff;
         border-bottom: 1px solid #d0d8f0;
-        padding: 8px 14px;
+        border-radius: 10px 10px 0 0; padding: 8px 14px;
     }
+    .xtb-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
-    /* ── Scrollable table body ── */
-    .xbody {
-        flex: 1;
-        overflow: auto;
-        min-height: 300px;
-        max-height: calc(100vh - 220px);
-    }
+    /* Scrollable table area */
+    .xbody { overflow: auto; max-height: calc(100vh - 230px); min-height: 200px; }
 
-    /* ── Footer / pagination ── */
+    /* Pagination footer */
     .xfoot {
-        flex-shrink: 0;
-        background: #f8f9ff;
+        flex-shrink: 0; background: #f8f9ff;
         border-top: 2px solid #c0caed;
-        padding: 4px 14px;
+        border-radius: 0 0 10px 10px;
+        padding: 6px 14px;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     }
 
-    /* ── Table ── */
-    .xt { border-collapse: collapse; width: 100%; font-size: 13px; table-layout: auto; }
-
+    /* Table */
+    .xt { border-collapse: collapse; width: 100%; font-size: 13px; }
     .xt th {
-        position: sticky; top: 0;
-        background: #eef2ff;
-        border: 1px solid #c4cfff;
-        padding: 5px 8px;
-        font-size: 12px; font-weight: 600;
-        white-space: nowrap;
-        user-select: none;
-        z-index: 10;
-        cursor: pointer;
+        position: sticky; top: 0; z-index: 10;
+        background: #eef2ff; border: 1px solid #c4cfff;
+        padding: 5px 8px; font-size: 12px; font-weight: 600;
+        white-space: nowrap; user-select: none; cursor: pointer;
     }
     .xt th:hover { background: #d8e2ff; }
-    .xt th.nc   { cursor: default; }
-
+    .xt th.nc { cursor: default; }
     .xt .frow th {
-        top: 29px;
-        background: #fffbf2;
-        padding: 2px 3px;
-        cursor: default;
-        border-top: 2px solid #e8d080;
+        top: 29px; background: #fffbf2; padding: 2px 3px;
+        cursor: default; border-top: 2px solid #e8d080; z-index: 9;
     }
-
     .xt td {
-        border: 1px solid #e4e8f8;
-        padding: 3px 7px;
-        white-space: nowrap;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        cursor: cell;
-        font-size: 13px;
-        height: 26px;
+        border: 1px solid #e4e8f8; padding: 3px 7px;
+        white-space: nowrap; max-width: 200px;
+        overflow: hidden; text-overflow: ellipsis;
+        cursor: cell; font-size: 13px; height: 26px;
     }
     .xt tr:nth-child(even) td { background: #f9faff; }
-    .xt tr:hover td            { background: #edf3ff !important; }
-    .xt tr.xsel td             { background: #d4e6ff !important; }
-
+    .xt tr:hover td { background: #edf3ff !important; }
+    .xt tr.xsel td { background: #d4e6ff !important; }
     .xt td.xedit { padding: 0 !important; overflow: visible; }
     .xt td.xedit input {
-        width: 100%; min-width: 100px;
-        border: 2px solid #1074d6; outline: none;
+        width: 100%; min-width: 100px; border: 2px solid #1074d6; outline: none;
         padding: 3px 6px; font-size: 13px; font-family: inherit;
-        background: white; box-sizing: border-box;
-        display: block; height: 26px;
+        background: white; box-sizing: border-box; display: block; height: 26px;
     }
-
     .xt .xrn {
-        background: #f0f0f4 !important;
-        color: #888; text-align: center;
-        width: 38px; min-width: 38px;
-        cursor: default; font-size: 11px;
+        background: #f0f0f4 !important; color: #888; text-align: center;
+        width: 38px; min-width: 38px; cursor: default; font-size: 11px;
         position: sticky; left: 0; z-index: 5;
     }
     .xt th.xrn { z-index: 11; }
-
-    .xt .xac  { width: 56px; min-width: 56px; cursor: default; text-align: center; }
-
+    .xt .xac { width: 68px; min-width: 68px; cursor: default; text-align: center; }
     .xt .xaddcol {
-        cursor: pointer;
-        border-left: 2px dashed #90a8ff !important;
-        color: #1074d6; text-align: center;
-        width: 34px; min-width: 34px;
+        cursor: pointer; border-left: 2px dashed #90a8ff !important;
+        color: #1074d6; text-align: center; width: 34px; min-width: 34px;
     }
     .xt .xaddcol:hover { background: #dde8ff !important; }
-
     .xfi {
-        width: 100%; box-sizing: border-box;
-        border: 1px solid #ddd; border-radius: 3px;
-        padding: 2px 4px; font-size: 11px;
+        width: 100%; box-sizing: border-box; border: 1px solid #ddd;
+        border-radius: 3px; padding: 2px 4px; font-size: 11px;
         font-family: inherit; background: white;
     }
     .xfi:focus { border-color: #1074d6; outline: none; background: #fff8e8; }
-
-    .xsi   { color: #1074d6; margin-left: 3px; font-size: 10px; }
-
-    .xchip   { display: inline-block; border-radius: 12px; padding: 1px 8px; font-size: 11px; font-weight: 500; }
+    .xsi { color: #1074d6; margin-left: 3px; font-size: 10px; }
+    .xchip { display: inline-block; border-radius: 12px; padding: 1px 8px; font-size: 11px; font-weight: 500; }
     .xchip-y { background: #fff3cd; color: #856404; }
     .xchip-f { background: #f3e8ff; color: #7c3aed; }
     .xchip-m { background: #e0f2fe; color: #0369a1; }
+
+    /* Row action buttons - plain HTML, no MudBlazor */
+    .xbtn {
+        display: inline-flex; align-items: center; justify-content: center;
+        border: none; background: transparent; cursor: pointer;
+        padding: 3px 6px; border-radius: 4px; font-size: 15px; line-height: 1;
+    }
+    .xbtn-edit { color: #1074d6; }
+    .xbtn-edit:hover { background: #e0edff; }
+    .xbtn-del { color: #d32f2f; }
+    .xbtn-del:hover { background: #fde8e8; }
+
+    /* Toolbar buttons */
+    .tbtn {
+        display: inline-flex; align-items: center; gap: 4px;
+        border-radius: 5px; padding: 5px 11px; font-size: 12px;
+        font-weight: 500; cursor: pointer; white-space: nowrap;
+        border: 1px solid currentColor; background: white;
+        font-family: inherit; transition: opacity .15s;
+    }
+    .tbtn:hover:not(:disabled) { opacity: .8; }
+    .tbtn:disabled { opacity: .4; cursor: default; }
+    .tbtn-primary { background: #1074d6; color: white; border-color: #1074d6; }
+    .tbtn-info    { color: #0369a1; border-color: #0369a1; }
+    .tbtn-success { color: #2e7d32; border-color: #2e7d32; }
+    .tbtn-warn    { color: #ed6c02; border-color: #ed6c02; }
+    .tbtn-warn-on { background: #ed6c02; color: white; border-color: #ed6c02; }
+    .tbtn-err     { color: #d32f2f; border-color: #d32f2f; }
+    .tbtn-sec     { color: #1e2393; border-color: #1e2393; }
+    .tbtn-muted   { color: #666; border-color: #aaa; }
+
+    /* Search box in toolbar */
+    .xsearch {
+        border: 1px solid #c4cfff; border-radius: 5px; padding: 5px 10px;
+        font-size: 13px; width: 200px; font-family: inherit;
+    }
+    .xsearch:focus { border-color: #1074d6; outline: none; }
+
+    /* Badges */
+    .xbadge {
+        display: inline-block; border-radius: 8px; padding: 1px 8px;
+        font-size: 11px; font-weight: 600;
+    }
+    .xbadge-blue { background: #eef2ff; color: #1e2393; }
+    .xbadge-orange { background: #fff3e0; color: #e65100; }
+
+    /* Pagination */
+    .pgbtn {
+        border: 1px solid #c0caed; border-radius: 4px; background: white;
+        padding: 3px 9px; cursor: pointer; font-size: 14px; color: #1074d6;
+        font-family: inherit;
+    }
+    .pgbtn:hover:not(:disabled) { background: #eef2ff; }
+    .pgbtn:disabled { opacity: .35; cursor: default; }
+    .pgsel { border: 1px solid #c0caed; border-radius: 4px; padding: 4px 6px; font-size: 12px; font-family: inherit; }
+
+    /* ─── PURE CSS MODALS ─── */
+    .xbackdrop {
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(0,0,0,.5);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .xmodal {
+        background: white; border-radius: 12px; padding: 28px 32px;
+        width: 92vw; max-width: 860px; max-height: 90vh;
+        overflow-y: auto; position: relative;
+        box-shadow: 0 12px 48px rgba(0,0,0,.35);
+    }
+    .xmodal-sm { max-width: 440px; }
+    .xmodal-title {
+        font-size: 1.05rem; font-weight: 700; color: #1e2393;
+        margin: 0 0 20px 0;
+    }
+    .xclose {
+        position: absolute; top: 14px; right: 16px;
+        border: none; background: none; cursor: pointer;
+        font-size: 20px; color: #888; line-height: 1; font-family: inherit;
+    }
+    .xclose:hover { color: #333; }
+    .xform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @@media (max-width:600px) { .xform-grid { grid-template-columns: 1fr; } }
+    .xfield { display: flex; flex-direction: column; gap: 4px; }
+    .xfield label { font-size: 12px; font-weight: 600; color: #444; }
+    .xfield input, .xfield select {
+        border: 1px solid #c4cfff; border-radius: 5px;
+        padding: 7px 10px; font-size: 13px; font-family: inherit;
+    }
+    .xfield input:focus, .xfield select:focus {
+        border-color: #1074d6; outline: none;
+        box-shadow: 0 0 0 2px rgba(16,116,214,.15);
+    }
+    .xmodal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .xdivider { width: 1px; height: 24px; background: #c4cfff; display: inline-block; }
 </style>
 
-@* ══════════════════════════════════════════════════════════
-   DIALOGS — rendered OUTSIDE the scrollable container so they
-   are never clipped by overflow:hidden / overflow:auto.
-   ══════════════════════════════════════════════════════════ *@
+@* ═══════════════════════════════════════════════
+   MODALS — fixed position, rendered at top level,
+   completely bypasses all overflow / z-index issues
+   ═══════════════════════════════════════════════ *@
 
-@* ── Add / Edit Row dialog ── *@
+@* Add / Edit Row *@
 @if (_showRowDialog && _dialogRecord != null)
 {
-    <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
-        <MudPaper Class="pa-6" Elevation="12"
-                  Style="width:92vw; max-width:880px; max-height:92vh; overflow-y:auto; border-radius:12px;">
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-                <MudText Typo="Typo.h6">
-                    <MudIcon Icon="@(_isNewRecord ? Icons.Material.Filled.PersonAdd : Icons.Material.Filled.Edit)"
-                             Size="MudBlazor.Size.Small" Class="mr-1"/>
-                    @(_isNewRecord ? "Add New Row" : $"Edit Row #{_dialogRecord.RowNumber}")
-                </MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="MudBlazor.Size.Small" OnClick="CloseRowDialog"/>
-            </MudStack>
+    <div class="xbackdrop" @onclick="CloseRowDialog">
+        <div class="xmodal" @onclick:stopPropagation="true">
+            <button class="xclose" @onclick="CloseRowDialog" type="button">✕</button>
+            <div class="xmodal-title">
+                @(_isNewRecord ? "➕ Add New Row" : $"✏️ Edit Row #{_dialogRecord.RowNumber}")
+            </div>
 
-            <MudGrid Spacing="2">
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.Name" Label="Name *"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.Surname" Label="Surname *"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" Required="true"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.Identifier" Label="Identifier (ID Number)"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.EmailAddress" Label="Email Address"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense" InputType="InputType.Email"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.LocalMunicipality" Label="Local Municipality"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.HostCompany" Label="Host Company"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.LeadCompany" Label="Lead Company"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.JobType" Label="Job Type"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.DemographicGroup" Label="Demographic Group"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudSelect @bind-Value="_dialogRecord.Sex" Label="Sex / Gender"
-                               Variant="Variant.Outlined" Margin="Margin.Dense">
-                        <MudSelectItem Value="@("Male")">Male</MudSelectItem>
-                        <MudSelectItem Value="@("Female")">Female</MudSelectItem>
-                        <MudSelectItem Value="@("Other")">Other</MudSelectItem>
-                        <MudSelectItem Value="@("")">— Not specified —</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.ContactDetails" Label="Contact Details"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_dialogRecord.EmploymentStatus" Label="Employment Status"
-                                  Variant="Variant.Outlined" Margin="Margin.Dense"/>
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudSelect @bind-Value="_dialogRecord.PersonDisability" Label="Person Disability"
-                               Variant="Variant.Outlined" Margin="Margin.Dense">
-                        <MudSelectItem Value="@("Y")">Yes — Has disability</MudSelectItem>
-                        <MudSelectItem Value="@("N")">No</MudSelectItem>
-                        <MudSelectItem Value="@("")">— Not specified —</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
+            <div class="xform-grid">
+                <div class="xfield"><label>Name *</label>
+                    <input @bind="_dialogRecord.Name" placeholder="First name" /></div>
+                <div class="xfield"><label>Surname *</label>
+                    <input @bind="_dialogRecord.Surname" placeholder="Last name" /></div>
+                <div class="xfield"><label>Identifier (ID No.)</label>
+                    <input @bind="_dialogRecord.Identifier" /></div>
+                <div class="xfield"><label>Email Address</label>
+                    <input type="email" @bind="_dialogRecord.EmailAddress" /></div>
+                <div class="xfield"><label>Local Municipality</label>
+                    <input @bind="_dialogRecord.LocalMunicipality" /></div>
+                <div class="xfield"><label>Host Company</label>
+                    <input @bind="_dialogRecord.HostCompany" /></div>
+                <div class="xfield"><label>Lead Company</label>
+                    <input @bind="_dialogRecord.LeadCompany" /></div>
+                <div class="xfield"><label>Job Type</label>
+                    <input @bind="_dialogRecord.JobType" /></div>
+                <div class="xfield"><label>Demographic Group</label>
+                    <input @bind="_dialogRecord.DemographicGroup" /></div>
+                <div class="xfield"><label>Sex / Gender</label>
+                    <select @bind="_dialogRecord.Sex">
+                        <option value="">— Not specified —</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select></div>
+                <div class="xfield"><label>Contact Details</label>
+                    <input @bind="_dialogRecord.ContactDetails" /></div>
+                <div class="xfield"><label>Employment Status</label>
+                    <input @bind="_dialogRecord.EmploymentStatus" /></div>
+                <div class="xfield"><label>Person Disability</label>
+                    <select @bind="_dialogRecord.PersonDisability">
+                        <option value="">— Not specified —</option>
+                        <option value="Y">Yes — Has disability</option>
+                        <option value="N">No</option>
+                    </select></div>
+
                 @foreach (var colName in _customColumnNames)
                 {
                     var cn = colName;
-                    <MudItem xs="12" sm="6">
-                        <MudTextField Value="@(_dialogCustomValues.TryGetValue(cn, out var cv) ? cv : string.Empty)"
-                                      Label="@($"{cn} (custom)")"
-                                      Variant="Variant.Outlined" Margin="Margin.Dense"
-                                      ValueChanged="(string nv) => _dialogCustomValues[cn] = nv ?? string.Empty"/>
-                    </MudItem>
+                    <div class="xfield">
+                        <label>@cn (custom)</label>
+                        <input value="@(_dialogCustomValues.TryGetValue(cn, out var cv) ? cv : "")"
+                               @oninput="e => _dialogCustomValues[cn] = e.Value?.ToString() ?? string.Empty" />
+                    </div>
                 }
-            </MudGrid>
+            </div>
 
-            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-5">
-                <MudButton OnClick="CloseRowDialog" Variant="Variant.Text">Cancel</MudButton>
-                <MudButton OnClick="SaveRow" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Save">
-                    @(_isNewRecord ? "Add Row" : "Save Changes")
-                </MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudOverlay>
+            <div class="xmodal-footer">
+                <button class="tbtn tbtn-muted" type="button" @onclick="CloseRowDialog">Cancel</button>
+                <button class="tbtn tbtn-primary" type="button" @onclick="SaveRow">
+                    💾 @(_isNewRecord ? "Add Row" : "Save Changes")
+                </button>
+            </div>
+        </div>
+    </div>
 }
 
-@* ── Add Column dialog ── *@
+@* Add Column *@
 @if (_showColDialog)
 {
-    <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999" AutoClose="false">
-        <MudPaper Class="pa-6" Elevation="12" Style="width:420px; border-radius:12px;">
-            <MudText Typo="Typo.h6" Class="mb-1">Add Custom Column</MudText>
-            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary" Class="mb-4">
-                Adds a new editable column to the table. Values are included in exports.
-            </MudText>
-            <MudTextField @bind-Value="_newColName" Label="Column Name"
-                          Variant="Variant.Outlined" Margin="Margin.Dense"
-                          Placeholder="e.g. Notes, Score, Flag"
-                          HelperText="Must be unique and non-empty."/>
-            <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
-                <MudButton OnClick="() => _showColDialog = false" Variant="Variant.Text">Cancel</MudButton>
-                <MudButton OnClick="AddCustomColumn" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
-                           StartIcon="@Icons.Material.Filled.ViewColumn">
-                    Add Column
-                </MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudOverlay>
+    <div class="xbackdrop" @onclick="() => _showColDialog = false">
+        <div class="xmodal xmodal-sm" @onclick:stopPropagation="true">
+            <button class="xclose" @onclick="() => _showColDialog = false" type="button">✕</button>
+            <div class="xmodal-title">➕ Add Custom Column</div>
+            <div class="xfield">
+                <label>Column Name</label>
+                <input @bind="_newColName" @bind:event="oninput"
+                       @onkeydown="HandleColKeyDown"
+                       placeholder="e.g. Notes, Score, Flag" />
+            </div>
+            <div class="xmodal-footer">
+                <button class="tbtn tbtn-muted" type="button" @onclick="() => _showColDialog = false">Cancel</button>
+                <button class="tbtn tbtn-primary" type="button" @onclick="AddCustomColumn">Add Column</button>
+            </div>
+        </div>
+    </div>
 }
 
-@* ══════════════════════════════════════════════════════════
+@* Confirm Delete *@
+@if (_showDeleteConfirm && _deleteTarget != null)
+{
+    <div class="xbackdrop" @onclick="() => _showDeleteConfirm = false">
+        <div class="xmodal xmodal-sm" @onclick:stopPropagation="true">
+            <button class="xclose" @onclick="() => _showDeleteConfirm = false" type="button">✕</button>
+            <div class="xmodal-title">🗑️ Delete Row</div>
+            <p style="color:#555; margin:0 0 20px 0;">
+                Delete row <strong>#@_deleteTarget.RowNumber</strong> —
+                <strong>@_deleteTarget.Name @_deleteTarget.Surname</strong>?<br />
+                <span style="color:#d32f2f; font-size:12px;">This cannot be undone.</span>
+            </p>
+            <div class="xmodal-footer">
+                <button class="tbtn tbtn-muted" type="button" @onclick="() => _showDeleteConfirm = false">Cancel</button>
+                <button class="tbtn" type="button"
+                        style="background:#d32f2f; color:white; border-color:#d32f2f;"
+                        @onclick="ExecuteDelete">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ═══════════════════════════════════════════════
    MAIN PAGE
-   ══════════════════════════════════════════════════════════ *@
+   ═══════════════════════════════════════════════ *@
 <div class="xpage">
 <div class="xcard">
 
-    @* ── TOOLBAR ── *@
+    @* TOOLBAR *@
     <div class="xtb">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
-                  Style="flex-wrap:wrap; gap:5px;">
-
-            <MudIcon Icon="@Icons.Material.Filled.TableChart"
-                     Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small"/>
-            <MudText Typo="Typo.subtitle1" Style="font-weight:700; color:#1e2393; margin-right:6px;">
-                Data Table
-            </MudText>
-            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">
-                @_filtered.Count / @_allRecords.Count rows &nbsp;·&nbsp; @VisibleColumns.Count cols
-                @if (HasFilters)
-                {
-                    <span style="color:#ed6c02; font-weight:600;">
-                        &nbsp;· @ActiveFilterCount filter(s) active
-                    </span>
-                }
-            </MudText>
-
-            <MudTextField @bind-Value="_globalSearch"
-                          Placeholder="Search all columns..."
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          Variant="Variant.Outlined" Margin="Margin.Dense"
-                          Style="width:200px;" Immediate="true" DebounceInterval="250"
-                          OnDebounceIntervalElapsed="ApplyFilters"/>
-
-            <div style="flex:1; min-width:4px;"/>
-
-            <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.PersonAdd"
-                       OnClick="OpenAddRowDialog">
-                Add Row
-            </MudButton>
-
-            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Info"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.ViewColumn"
-                       OnClick="OpenAddColumnDialog">
-                + Column
-            </MudButton>
-
-            <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
-
-            <MudButton Variant="@(_showFilters ? Variant.Filled : Variant.Outlined)"
-                       Color="@(HasFilters ? MudBlazor.Color.Warning : MudBlazor.Color.Default)"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.FilterAlt"
-                       OnClick="() => _showFilters = !_showFilters">
-                Filters
-            </MudButton>
-
+        <div class="xtb-row">
+            <span style="font-weight:700; color:#1e2393; font-size:14px; margin-right:4px;">📊 Data Table</span>
+            <span class="xbadge xbadge-blue">@_filtered.Count / @_allRecords.Count rows · @VisibleColumns.Count cols</span>
             @if (HasFilters)
             {
-                <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Error"
-                           Size="MudBlazor.Size.Small"
-                           StartIcon="@Icons.Material.Filled.FilterAltOff"
-                           OnClick="ClearAllFilters">
-                    Clear
-                </MudButton>
+                <span class="xbadge xbadge-orange">@ActiveFilterCount filter(s) active</span>
             }
 
-            <MudDivider Vertical="true" FlexItem="true" Style="height:28px;"/>
+            <input class="xsearch"
+                   placeholder="🔍 Search all columns..."
+                   value="@_globalSearch"
+                   @oninput="OnGlobalSearchInput" />
 
-            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Success"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.FileDownload"
-                       OnClick="@(() => ExportData(false))"
-                       Disabled="@(_filtered.Count == 0)">
-                Export (@_filtered.Count)
-            </MudButton>
+            <div style="flex:1; min-width:4px;"></div>
 
-            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Success"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.Download"
-                       OnClick="@(() => ExportData(true))"
-                       Disabled="@(_allRecords.Count == 0)">
-                All (@_allRecords.Count)
-            </MudButton>
+            <button class="tbtn tbtn-primary" type="button" @onclick="OpenAddRowDialog">➕ Add Row</button>
+            <button class="tbtn tbtn-info"    type="button" @onclick="OpenAddColumnDialog">＋ Column</button>
 
-            <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary"
-                       Size="MudBlazor.Size.Small"
-                       StartIcon="@Icons.Material.Filled.Description"
-                       OnClick="DownloadTemplate">
-                Template
-            </MudButton>
-        </MudStack>
+            <span class="xdivider"></span>
+
+            <button class="tbtn @(_showFilters ? "tbtn-warn-on" : "tbtn-warn")"
+                    type="button" @onclick="() => _showFilters = !_showFilters">
+                ⚙ Filters
+            </button>
+            @if (HasFilters)
+            {
+                <button class="tbtn tbtn-err" type="button" @onclick="ClearAllFilters">✕ Clear</button>
+            }
+
+            <span class="xdivider"></span>
+
+            <button class="tbtn tbtn-success" type="button"
+                    disabled="@(_filtered.Count == 0)"
+                    @onclick="() => ExportData(false)">
+                ⬇ Export (@_filtered.Count)
+            </button>
+            <button class="tbtn tbtn-success" type="button"
+                    disabled="@(_allRecords.Count == 0)"
+                    @onclick="() => ExportData(true)">
+                ⬇ All (@_allRecords.Count)
+            </button>
+            <button class="tbtn tbtn-sec" type="button" @onclick="DownloadTemplate">📄 Template</button>
+        </div>
     </div>
 
-    @* ── TABLE BODY ── *@
+    @* TABLE *@
     <div class="xbody">
         @if (_allRecords.Count == 0)
         {
-            <MudStack AlignItems="AlignItems.Center" Class="py-16">
-                <MudIcon Icon="@Icons.Material.Filled.TableView" Style="font-size:5rem; opacity:0.15;"/>
-                <MudText Typo="Typo.h6" Color="MudBlazor.Color.Secondary">No data loaded</MudText>
-                <MudText Typo="Typo.body2" Color="MudBlazor.Color.Secondary">
-                    Go to <strong>Uploads</strong> to import an Excel file.
-                </MudText>
-                <MudStack Row="true" Spacing="2" Class="mt-2">
-                    <MudButton Href="/upload" Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Upload">Upload Data</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary"
-                               OnClick="DownloadTemplate"
-                               StartIcon="@Icons.Material.Filled.Download">Template</MudButton>
-                </MudStack>
-            </MudStack>
+            <div style="text-align:center; padding:60px 20px; color:#888;">
+                <div style="font-size:4rem; opacity:.15;">📋</div>
+                <div style="font-size:1.1rem; font-weight:600; margin-bottom:8px;">No data loaded</div>
+                <div style="margin-bottom:16px;">Go to <strong>Uploads</strong> to import an Excel file.</div>
+                <a href="/upload"
+                   style="background:#1074d6; color:white; padding:8px 18px; border-radius:6px;
+                          text-decoration:none; font-size:13px;">⬆ Upload Data</a>
+            </div>
         }
         else
         {
@@ -401,7 +383,7 @@
                         @foreach (var col in VisibleColumns)
                         {
                             var c = col;
-                            <th @onclick="() => ToggleSort(c.Key)" title="Click to sort">
+                            <th @onclick="() => ToggleSort(c.Key)">
                                 @c.Label
                                 @if (_sortCol == c.Key)
                                 { <span class="xsi">@(_sortAsc ? "▲" : "▼")</span> }
@@ -410,7 +392,6 @@
                         <th class="xac nc" style="border-left:2px solid #c4cfff;">Actions</th>
                         <th class="xaddcol nc" @onclick="OpenAddColumnDialog" title="Add custom column">＋</th>
                     </tr>
-
                     @if (_showFilters)
                     {
                         <tr class="frow">
@@ -418,11 +399,9 @@
                             @foreach (var col in VisibleColumns)
                             {
                                 var c = col;
-                                <th>
-                                    <input class="xfi" placeholder="filter..."
+                                <th><input class="xfi" placeholder="filter..."
                                            value="@GetFilter(c.Key)"
-                                           @oninput="e => OnFilterChanged(c.Key, e.Value?.ToString() ?? string.Empty)"/>
-                                </th>
+                                           @oninput="e => OnFilterChanged(c.Key, e.Value?.ToString() ?? string.Empty)" /></th>
                             }
                             <th></th><th></th>
                         </tr>
@@ -437,7 +416,7 @@
 
                             @foreach (var col in VisibleColumns)
                             {
-                                var c   = col;
+                                var c = col;
                                 bool isEdit = _editRow == r.RowNumber && _editCol == c.Key;
                                 <td class="@(isEdit ? "xedit" : "")"
                                     @onclick="() => BeginEdit(r.RowNumber, c.Key, GetCellValue(r, c.Key))">
@@ -447,7 +426,7 @@
                                                @oninput="e => _editValue = e.Value?.ToString() ?? string.Empty"
                                                @onblur="CommitEdit"
                                                @onkeydown="HandleEditKey"
-                                               @ref="_editInputRef"/>
+                                               @ref="_editInputRef" />
                                     }
                                     else
                                     {
@@ -456,28 +435,26 @@
                                 </td>
                             }
 
-                            <td class="xac">
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                               Size="MudBlazor.Size.Small"
-                                               Color="MudBlazor.Color.Primary"
-                                               OnClick="() => OpenEditRowDialog(r)"
-                                               Style="padding:2px;"/>
-                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
-                                               Size="MudBlazor.Size.Small"
-                                               Color="MudBlazor.Color.Error"
-                                               OnClick="() => ConfirmDelete(r)"
-                                               Style="padding:2px;"/>
+                            @* CRITICAL: stopPropagation prevents td @onclick from swallowing button clicks *@
+                            <td class="xac" @onclick:stopPropagation="true">
+                                <button class="xbtn xbtn-edit" type="button"
+                                        title="Edit row"
+                                        @onclick="() => OpenEditRowDialog(r)"
+                                        @onclick:stopPropagation="true">✏</button>
+                                <button class="xbtn xbtn-del" type="button"
+                                        title="Delete row"
+                                        @onclick="() => AskDelete(r)"
+                                        @onclick:stopPropagation="true">🗑</button>
                             </td>
                             <td></td>
                         </tr>
                     }
-
                     @if (PagedData.Count == 0)
                     {
                         <tr>
                             <td colspan="@(VisibleColumns.Count + 3)"
                                 style="text-align:center; padding:32px; color:#999; font-style:italic;">
-                                No records match the current filters. &nbsp;
+                                No records match current filters. &nbsp;
                                 <a href="javascript:void(0)" style="color:#1074d6;"
                                    @onclick="ClearAllFilters">Clear filters</a>
                             </td>
@@ -488,58 +465,45 @@
         }
     </div>
 
-    @* ── PAGINATION ── *@
+    @* PAGINATION *@
     @if (_allRecords.Count > 0)
     {
         <div class="xfoot">
-            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">
-                    @if (_filtered.Count > 0)
-                    {
-                        <span>
-                            Rows @(_page * _pageSize + 1)–@(Math.Min((_page + 1) * _pageSize, _filtered.Count))
-                            of @_filtered.Count
-                        </span>
-                    }
-                    @if (HasFilters) { <span> (of @_allRecords.Count total)</span> }
-                </MudText>
-
-                <div style="flex:1;"/>
-
-                <MudText Typo="Typo.caption" Color="MudBlazor.Color.Secondary">Rows per page:</MudText>
-                <MudSelect T="int" Value="_pageSize" ValueChanged="OnPageSizeChanged"
-                           Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:76px;">
-                    <MudSelectItem Value="10">10</MudSelectItem>
-                    <MudSelectItem Value="25">25</MudSelectItem>
-                    <MudSelectItem Value="50">50</MudSelectItem>
-                    <MudSelectItem Value="100">100</MudSelectItem>
-                    <MudSelectItem Value="500">500</MudSelectItem>
-                </MudSelect>
-
-                <MudIconButton Icon="@Icons.Material.Filled.FirstPage"
-                               Size="MudBlazor.Size.Small" Disabled="@(_page == 0)"
-                               OnClick="() => _page = 0"/>
-                <MudIconButton Icon="@Icons.Material.Filled.NavigateBefore"
-                               Size="MudBlazor.Size.Small" Disabled="@(_page == 0)"
-                               OnClick="() => { if (_page > 0) _page--; }"/>
-                <MudText Typo="Typo.caption" Style="min-width:72px; text-align:center;">
-                    @(_page + 1) / @TotalPages
-                </MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.NavigateNext"
-                               Size="MudBlazor.Size.Small" Disabled="@(_page >= TotalPages - 1)"
-                               OnClick="() => { if (_page < TotalPages - 1) _page++; }"/>
-                <MudIconButton Icon="@Icons.Material.Filled.LastPage"
-                               Size="MudBlazor.Size.Small" Disabled="@(_page >= TotalPages - 1)"
-                               OnClick="() => _page = TotalPages - 1"/>
-            </MudStack>
+            <span style="font-size:12px; color:#666;">
+                @if (_filtered.Count > 0)
+                {
+                    <text>Rows @(_page * _pageSize + 1)–@(Math.Min((_page+1)*_pageSize, _filtered.Count)) of @_filtered.Count</text>
+                }
+                @if (HasFilters) { <text> &nbsp;(of @_allRecords.Count total)</text> }
+            </span>
+            <div style="flex:1;"></div>
+            <span style="font-size:12px; color:#666;">Rows per page:</span>
+            <select class="pgsel" value="@_pageSize" @onchange="OnPageSizeChanged">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="500">500</option>
+            </select>
+            <button class="pgbtn" type="button" disabled="@(_page == 0)"
+                    @onclick="() => GoToPage(0)">⏮</button>
+            <button class="pgbtn" type="button" disabled="@(_page == 0)"
+                    @onclick="() => GoToPage(_page - 1)">◀</button>
+            <span style="font-size:12px; min-width:60px; text-align:center; color:#444;">
+                @(_page + 1) / @TotalPages
+            </span>
+            <button class="pgbtn" type="button" disabled="@(_page >= TotalPages - 1)"
+                    @onclick="() => GoToPage(_page + 1)">▶</button>
+            <button class="pgbtn" type="button" disabled="@(_page >= TotalPages - 1)"
+                    @onclick="() => GoToPage(TotalPages - 1)">⏭</button>
         </div>
     }
 
-</div><!-- /.xcard -->
-</div><!-- /.xpage -->
+</div>
+</div>
 
 @code {
-    // ─── Column definitions ────────────────────────────────────────────────
+    // ── Column definitions ──────────────────────────────────────────────────
     private record ColDef(string Key, string Label, bool IsCustom = false);
 
     private static readonly List<ColDef> FixedCols = new()
@@ -559,13 +523,13 @@
         new("PersonDisability",  "Disability"),
     };
 
-    private List<string>                        _customColumnNames = new();
+    private List<string> _customColumnNames = new();
     private Dictionary<int, Dictionary<string, string>> _customValues = new();
 
     private IReadOnlyList<ColDef> VisibleColumns =>
         FixedCols.Concat(_customColumnNames.Select(n => new ColDef(n, n, true))).ToList();
 
-    // ─── Data state ────────────────────────────────────────────────────────
+    // ── Data ────────────────────────────────────────────────────────────────
     private List<PersonRecord> _allRecords = new();
     private List<PersonRecord> _filtered   = new();
 
@@ -579,46 +543,37 @@
     private bool   _sortAsc = true;
     private int?   _selectedRow;
 
-    // ─── Filter state ──────────────────────────────────────────────────────
+    // ── Filters ─────────────────────────────────────────────────────────────
     private string _globalSearch = string.Empty;
     private bool   _showFilters;
     private Dictionary<string, string> _colFilters = new();
+    private string GetFilter(string k) => _colFilters.TryGetValue(k, out var v) ? v : string.Empty;
+    private void OnFilterChanged(string k, string val) { _colFilters[k] = val; _page = 0; ApplyFilters(); }
+    private void OnGlobalSearchInput(ChangeEventArgs e) { _globalSearch = e.Value?.ToString() ?? string.Empty; _page = 0; ApplyFilters(); }
+    private bool HasFilters => !string.IsNullOrWhiteSpace(_globalSearch) || _colFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value));
+    private int ActiveFilterCount => (string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1) + _colFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
 
-    private string GetFilter(string k) =>
-        _colFilters.TryGetValue(k, out var v) ? v : string.Empty;
-
-    private void OnFilterChanged(string k, string val)
-    {
-        _colFilters[k] = val;
-        _page = 0;
-        ApplyFilters();
-    }
-
-    private bool HasFilters =>
-        !string.IsNullOrWhiteSpace(_globalSearch) ||
-        _colFilters.Any(f => !string.IsNullOrWhiteSpace(f.Value));
-
-    private int ActiveFilterCount =>
-        (string.IsNullOrWhiteSpace(_globalSearch) ? 0 : 1) +
-        _colFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value));
-
-    // ─── Inline edit state ─────────────────────────────────────────────────
+    // ── Inline edit ─────────────────────────────────────────────────────────
     private int?    _editRow;
     private string? _editCol;
-    private string  _editValue   = string.Empty;
+    private string  _editValue = string.Empty;
     private ElementReference _editInputRef;
     private bool    _needsFocus;
     private bool    _suppressRefresh;
 
-    // ─── Dialog state ──────────────────────────────────────────────────────
-    private bool          _showRowDialog;
-    private bool          _isNewRecord;
+    // ── Dialog state ────────────────────────────────────────────────────────
+    private bool _showRowDialog;
+    private bool _isNewRecord;
     private PersonRecord? _dialogRecord;
     private Dictionary<string, string> _dialogCustomValues = new();
+
     private bool   _showColDialog;
     private string _newColName = string.Empty;
 
-    // ─── Lifecycle ─────────────────────────────────────────────────────────
+    private bool _showDeleteConfirm;
+    private PersonRecord? _deleteTarget;
+
+    // ── Lifecycle ────────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         DataService.OnDataChanged += Refresh;
@@ -632,7 +587,7 @@
         if (_needsFocus)
         {
             _needsFocus = false;
-            try { await _editInputRef.FocusAsync(); } catch { /* ignore */ }
+            try { await _editInputRef.FocusAsync(); } catch { }
         }
     }
 
@@ -644,7 +599,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    // ─── Filter / Sort ─────────────────────────────────────────────────────
+    // ── Filter / Sort ────────────────────────────────────────────────────────
     private void ApplyFilters()
     {
         var q = _allRecords.AsEnumerable();
@@ -663,14 +618,13 @@
 
         foreach (var kv in _colFilters.Where(f => !string.IsNullOrWhiteSpace(f.Value)))
         {
-            var term = kv.Value.Trim();
-            var key  = kv.Key;
+            var term = kv.Value.Trim(); var key = kv.Key;
             q = q.Where(r => CI(GetCellValue(r, key), term));
         }
 
         if (!string.IsNullOrWhiteSpace(_sortCol))
             q = _sortAsc
-                ? q.OrderBy(r  => GetCellValue(r, _sortCol), StringComparer.OrdinalIgnoreCase)
+                ? q.OrderBy(r => GetCellValue(r, _sortCol), StringComparer.OrdinalIgnoreCase)
                 : q.OrderByDescending(r => GetCellValue(r, _sortCol), StringComparer.OrdinalIgnoreCase);
 
         _filtered = q.ToList();
@@ -681,23 +635,15 @@
     {
         if (_sortCol == col) _sortAsc = !_sortAsc;
         else { _sortCol = col; _sortAsc = true; }
-        _page = 0;
-        ApplyFilters();
+        _page = 0; ApplyFilters();
     }
 
-    private void ClearAllFilters()
-    {
-        _globalSearch = string.Empty;
-        _colFilters.Clear();
-        ApplyFilters();
-    }
+    private void ClearAllFilters() { _globalSearch = string.Empty; _colFilters.Clear(); ApplyFilters(); }
+    private void OnPageSizeChanged(ChangeEventArgs e) { if (int.TryParse(e.Value?.ToString(), out var s)) { _pageSize = s; _page = 0; } }
+    private void GoToPage(int p) => _page = Math.Clamp(p, 0, TotalPages - 1);
+    private static bool CI(string src, string term) => (src ?? "").Contains(term, StringComparison.OrdinalIgnoreCase);
 
-    private void OnPageSizeChanged(int size) { _pageSize = size; _page = 0; }
-
-    private static bool CI(string src, string term) =>
-        (src ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase);
-
-    // ─── Cell value helpers ────────────────────────────────────────────────
+    // ── Cell helpers ─────────────────────────────────────────────────────────
     private string GetCellValue(PersonRecord r, string key) => key switch
     {
         "Name"              => r.Name,
@@ -722,11 +668,10 @@
         if (key == "Sex" && !string.IsNullOrWhiteSpace(raw))
         {
             var cls = raw.Equals("Female", StringComparison.OrdinalIgnoreCase) ? "xchip-f" : "xchip-m";
-            return new MarkupString($"<span class='xchip {cls}'>{raw}</span>");
+            return new MarkupString($"<span class='xchip {cls}'>{System.Net.WebUtility.HtmlEncode(raw)}</span>");
         }
         if (key == "PersonDisability" && r.HasDisability)
             return new MarkupString("<span class='xchip xchip-y'>Yes</span>");
-
         return new MarkupString(System.Net.WebUtility.HtmlEncode(raw));
     }
 
@@ -748,38 +693,32 @@
             case "EmploymentStatus":  r.EmploymentStatus  = val; break;
             case "PersonDisability":  r.PersonDisability  = val; break;
             default:
-                if (!_customValues.ContainsKey(r.RowNumber))
-                    _customValues[r.RowNumber] = new Dictionary<string, string>();
+                if (!_customValues.ContainsKey(r.RowNumber)) _customValues[r.RowNumber] = new();
                 _customValues[r.RowNumber][key] = val;
                 break;
         }
     }
 
-    private string GetCustomValue(int rowNum, string colName)
+    private string GetCustomValue(int rowNum, string col)
     {
-        if (_customValues.TryGetValue(rowNum, out var d) &&
-            d.TryGetValue(colName, out var v)) return v;
+        if (_customValues.TryGetValue(rowNum, out var d) && d.TryGetValue(col, out var v)) return v;
         return string.Empty;
     }
 
     private bool IsFixedColumn(string key) => FixedCols.Any(c => c.Key == key);
 
-    // ─── Inline cell editing ───────────────────────────────────────────────
+    // ── Inline edit ──────────────────────────────────────────────────────────
     private void BeginEdit(int rowNum, string colKey, string currentValue)
     {
         if (_editRow == rowNum && _editCol == colKey) return;
         if (_editRow is not null) CommitEdit();
-        _editRow     = rowNum;
-        _editCol     = colKey;
-        _editValue   = currentValue;
-        _selectedRow = rowNum;
-        _needsFocus  = true;
+        _editRow = rowNum; _editCol = colKey;
+        _editValue = currentValue; _selectedRow = rowNum; _needsFocus = true;
     }
 
     private void CommitEdit()
     {
         if (_editRow is null || _editCol is null) return;
-
         var record = _allRecords.FirstOrDefault(r => r.RowNumber == _editRow);
         if (record != null)
         {
@@ -796,30 +735,22 @@
                 }
             }
         }
-        _editRow   = null;
-        _editCol   = null;
-        _editValue = string.Empty;
-    }
-
-    private void CancelEdit()
-    {
         _editRow = null; _editCol = null; _editValue = string.Empty;
     }
 
     private void HandleEditKey(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")  CommitEdit();
-        if (e.Key == "Escape") CancelEdit();
+        if (e.Key == "Escape") { _editRow = null; _editCol = null; _editValue = string.Empty; }
     }
 
-    // ─── Row dialogs ───────────────────────────────────────────────────────
+    // ── Add / Edit Row dialog ────────────────────────────────────────────────
     private void OpenAddRowDialog()
     {
         CommitEdit();
-        _dialogRecord       = new PersonRecord();
+        _dialogRecord = new PersonRecord();
         _dialogCustomValues = _customColumnNames.ToDictionary(n => n, _ => string.Empty);
-        _isNewRecord        = true;
-        _showRowDialog      = true;
+        _isNewRecord = true; _showRowDialog = true;
     }
 
     private void OpenEditRowDialog(PersonRecord r)
@@ -827,36 +758,23 @@
         CommitEdit();
         _dialogRecord = new PersonRecord
         {
-            RowNumber         = r.RowNumber,
-            Name              = r.Name,
-            Surname           = r.Surname,
-            Identifier        = r.Identifier,
-            EmailAddress      = r.EmailAddress,
-            LocalMunicipality = r.LocalMunicipality,
-            HostCompany       = r.HostCompany,
-            LeadCompany       = r.LeadCompany,
-            JobType           = r.JobType,
-            DemographicGroup  = r.DemographicGroup,
-            Sex               = r.Sex,
-            ContactDetails    = r.ContactDetails,
-            EmploymentStatus  = r.EmploymentStatus,
-            PersonDisability  = r.PersonDisability
+            RowNumber = r.RowNumber, Name = r.Name, Surname = r.Surname,
+            Identifier = r.Identifier, EmailAddress = r.EmailAddress,
+            LocalMunicipality = r.LocalMunicipality, HostCompany = r.HostCompany,
+            LeadCompany = r.LeadCompany, JobType = r.JobType,
+            DemographicGroup = r.DemographicGroup, Sex = r.Sex,
+            ContactDetails = r.ContactDetails, EmploymentStatus = r.EmploymentStatus,
+            PersonDisability = r.PersonDisability
         };
-        _dialogCustomValues = _customColumnNames.ToDictionary(
-            n => n, n => GetCustomValue(r.RowNumber, n));
-        _isNewRecord   = false;
-        _showRowDialog = true;
+        _dialogCustomValues = _customColumnNames.ToDictionary(n => n, n => GetCustomValue(r.RowNumber, n));
+        _isNewRecord = false; _showRowDialog = true;
     }
 
     private void SaveRow()
     {
         if (_dialogRecord is null) return;
-        if (string.IsNullOrWhiteSpace(_dialogRecord.Name) &&
-            string.IsNullOrWhiteSpace(_dialogRecord.Surname))
-        {
-            Snackbar.Add("Name or Surname is required.", Severity.Warning);
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(_dialogRecord.Name) && string.IsNullOrWhiteSpace(_dialogRecord.Surname))
+        { Snackbar.Add("Name or Surname is required.", Severity.Warning); return; }
 
         if (_isNewRecord)
         {
@@ -872,106 +790,76 @@
         var rowNum = _dialogRecord.RowNumber;
         foreach (var kv in _dialogCustomValues)
         {
-            if (!_customValues.ContainsKey(rowNum))
-                _customValues[rowNum] = new Dictionary<string, string>();
+            if (!_customValues.ContainsKey(rowNum)) _customValues[rowNum] = new();
             _customValues[rowNum][kv.Key] = kv.Value;
         }
-
         CloseRowDialog();
     }
 
-    private void CloseRowDialog()
+    private void CloseRowDialog() { _showRowDialog = false; _dialogRecord = null; _dialogCustomValues = new(); }
+
+    // ── Delete ───────────────────────────────────────────────────────────────
+    private void AskDelete(PersonRecord r) { CommitEdit(); _deleteTarget = r; _showDeleteConfirm = true; }
+
+    private void ExecuteDelete()
     {
-        _showRowDialog      = false;
-        _dialogRecord       = null;
-        _dialogCustomValues = new();
+        if (_deleteTarget is null) return;
+        _customValues.Remove(_deleteTarget.RowNumber);
+        DataService.DeleteRecord(_deleteTarget.RowNumber);
+        Snackbar.Add($"Row #{_deleteTarget.RowNumber} deleted.", Severity.Info);
+        _showDeleteConfirm = false; _deleteTarget = null;
     }
 
-    // ─── Delete ────────────────────────────────────────────────────────────
-    private async Task ConfirmDelete(PersonRecord r)
-    {
-        CommitEdit();
-        bool? ok = await DialogService.ShowMessageBox(
-            "Delete Row",
-            $"Delete row #{r.RowNumber} — {r.Name} {r.Surname}? This cannot be undone.",
-            yesText: "Delete", cancelText: "Cancel");
-        if (ok == true)
-        {
-            _customValues.Remove(r.RowNumber);
-            DataService.DeleteRecord(r.RowNumber);
-            Snackbar.Add($"Row #{r.RowNumber} deleted.", Severity.Info);
-        }
-    }
+    // ── Custom column ────────────────────────────────────────────────────────
+    private void OpenAddColumnDialog() { _newColName = string.Empty; _showColDialog = true; }
 
-    // ─── Custom column ─────────────────────────────────────────────────────
-    private void OpenAddColumnDialog()
-    {
-        _newColName    = string.Empty;
-        _showColDialog = true;
-    }
+    private void HandleColKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter") AddCustomColumn(); }
 
     private void AddCustomColumn()
     {
         var name = _newColName.Trim();
-        if (string.IsNullOrWhiteSpace(name))
-        { Snackbar.Add("Column name cannot be empty.", Severity.Warning); return; }
-
+        if (string.IsNullOrWhiteSpace(name)) { Snackbar.Add("Column name cannot be empty.", Severity.Warning); return; }
         if (_customColumnNames.Contains(name, StringComparer.OrdinalIgnoreCase) ||
             FixedCols.Any(c => c.Key.Equals(name, StringComparison.OrdinalIgnoreCase) ||
                                c.Label.Equals(name, StringComparison.OrdinalIgnoreCase)))
         { Snackbar.Add($"Column '{name}' already exists.", Severity.Warning); return; }
 
         _customColumnNames.Add(name);
-        _showColDialog = false;
-        _newColName    = string.Empty;
+        _showColDialog = false; _newColName = string.Empty;
         Snackbar.Add($"Column '{name}' added.", Severity.Success);
     }
 
-    // ─── Export ────────────────────────────────────────────────────────────
+    // ── Export ───────────────────────────────────────────────────────────────
     private async Task ExportData(bool allData)
     {
         try
         {
             CommitEdit();
             var records = allData ? _allRecords : _filtered;
-            if (records.Count == 0)
-            { Snackbar.Add("No records to export.", Severity.Warning); return; }
-
+            if (records.Count == 0) { Snackbar.Add("No records to export.", Severity.Warning); return; }
             var bytes  = BuildExportBytes(records);
-            var base64 = Convert.ToBase64String(bytes);
-            var file   = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
-
-            await JS.InvokeVoidAsync("downloadFileBase64", file,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
-
+            var b64    = Convert.ToBase64String(bytes);
+            var fname  = $"Participants_{(allData ? "All" : "Filtered")}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+            await JS.InvokeVoidAsync("downloadFileBase64", fname,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", b64);
             Snackbar.Add($"Exported {records.Count} records.", Severity.Success);
         }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Export error");
-            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
-        }
+        catch (Exception ex) { Logger.LogError(ex, "Export error"); Snackbar.Add($"Export failed: {ex.Message}", Severity.Error); }
     }
 
     private byte[] BuildExportBytes(List<PersonRecord> records)
     {
         using var pkg = new ExcelPackage();
         var ws = pkg.Workbook.Worksheets.Add("Participants");
-
-        var headers = new List<string>
-        {
-            "#", "Name", "Surname", "Identifier", "Email Address",
-            "Local Municipality", "Host Company", "Lead Company",
-            "Job Type", "Demographic Group", "Sex", "Contact Details",
-            "Employment Status", "Person Disability"
-        };
+        var headers = new List<string> { "#","Name","Surname","Identifier","Email Address",
+            "Local Municipality","Host Company","Lead Company","Job Type","Demographic Group",
+            "Sex","Contact Details","Employment Status","Person Disability" };
         headers.AddRange(_customColumnNames);
 
         for (int c = 0; c < headers.Count; c++)
         {
             var cell = ws.Cells[1, c + 1];
-            cell.Value = headers[c];
-            cell.Style.Font.Bold = true;
+            cell.Value = headers[c]; cell.Style.Font.Bold = true;
             cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
             cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0x10, 0x74, 0xD6));
             cell.Style.Font.Color.SetColor(System.Drawing.Color.White);
@@ -980,38 +868,24 @@
         int row = 2;
         foreach (var r in records)
         {
-            ws.Cells[row,  1].Value = r.RowNumber;
-            ws.Cells[row,  2].Value = r.Name;
-            ws.Cells[row,  3].Value = r.Surname;
-            ws.Cells[row,  4].Value = r.Identifier;
-            ws.Cells[row,  5].Value = r.EmailAddress;
-            ws.Cells[row,  6].Value = r.LocalMunicipality;
-            ws.Cells[row,  7].Value = r.HostCompany;
-            ws.Cells[row,  8].Value = r.LeadCompany;
-            ws.Cells[row,  9].Value = r.JobType;
-            ws.Cells[row, 10].Value = r.DemographicGroup;
-            ws.Cells[row, 11].Value = r.Sex;
-            ws.Cells[row, 12].Value = r.ContactDetails;
-            ws.Cells[row, 13].Value = r.EmploymentStatus;
-            ws.Cells[row, 14].Value = r.PersonDisability;
-
+            ws.Cells[row,1].Value=r.RowNumber; ws.Cells[row,2].Value=r.Name;
+            ws.Cells[row,3].Value=r.Surname;   ws.Cells[row,4].Value=r.Identifier;
+            ws.Cells[row,5].Value=r.EmailAddress; ws.Cells[row,6].Value=r.LocalMunicipality;
+            ws.Cells[row,7].Value=r.HostCompany;  ws.Cells[row,8].Value=r.LeadCompany;
+            ws.Cells[row,9].Value=r.JobType;      ws.Cells[row,10].Value=r.DemographicGroup;
+            ws.Cells[row,11].Value=r.Sex;          ws.Cells[row,12].Value=r.ContactDetails;
+            ws.Cells[row,13].Value=r.EmploymentStatus; ws.Cells[row,14].Value=r.PersonDisability;
             for (int c = 0; c < _customColumnNames.Count; c++)
-                ws.Cells[row, 15 + c].Value =
-                    GetCustomValue(r.RowNumber, _customColumnNames[c]);
-
+                ws.Cells[row, 15 + c].Value = GetCustomValue(r.RowNumber, _customColumnNames[c]);
             if (row % 2 == 0)
             {
                 using var rng = ws.Cells[row, 1, row, headers.Count];
                 rng.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                rng.Style.Fill.BackgroundColor.SetColor(
-                    System.Drawing.Color.FromArgb(0xF0, 0xF4, 0xFF));
+                rng.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0xF0, 0xF4, 0xFF));
             }
             row++;
         }
-
-        if (ws.Dimension != null)
-            ws.Cells[ws.Dimension.Address].AutoFitColumns();
-
+        if (ws.Dimension != null) ws.Cells[ws.Dimension.Address].AutoFitColumns();
         return pkg.GetAsByteArray();
     }
 
@@ -1019,16 +893,12 @@
     {
         try
         {
-            var bytes  = DataService.GenerateTemplate();
-            var base64 = Convert.ToBase64String(bytes);
+            var bytes = DataService.GenerateTemplate();
+            var b64   = Convert.ToBase64String(bytes);
             await JS.InvokeVoidAsync("downloadFileBase64", "ParticipantTemplate.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", b64);
             Snackbar.Add("Template downloaded.", Severity.Info);
         }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Template error");
-            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
-        }
+        catch (Exception ex) { Logger.LogError(ex, "Template error"); Snackbar.Add($"Failed: {ex.Message}", Severity.Error); }
     }
 }
