@@ -133,7 +133,7 @@ namespace ExcelDashboardMVP.Services
                 }
             };
 
-            var url    = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            var url    = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={apiKey}";
             var json   = JsonSerializer.Serialize(requestBody);
             var client = _httpClientFactory.CreateClient("Gemini");
 
